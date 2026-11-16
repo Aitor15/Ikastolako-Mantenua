@@ -1,10 +1,8 @@
-// Itsatsi hemen Firebase-ren konfigurazioa (Proiektuaren ezarpenak → Zure aplikazioak → SDK konfigurazioa → "Config").
-// Ordeztu beheko balio guztiak zureekin. Datu hauek ez dira sekretuak: segurtasuna Firestore-ren arauek ematen dute.
 window.FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyCayK5N5O5VBbIQq9JlkFNXUeeUvNfuSp0",
+  authDomain: "ikastolako-mantenua.firebaseapp.com",
+  projectId: "ikastolako-mantenua",
+  storageBucket: "ikastolako-mantenua.firebasestorage.app",
+  messagingSenderId: "231877710141",
+  appId: "1:231877710141:web:3457d3798389f599fef554"
 };
