@@ -1,3 +1,5 @@
+// Firebase-ren konfigurazioa (ikastolako-mantenua). Datu hauek ez dira sekretuak:
+// segurtasuna Firestore-ren arauek ematen dute.
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyCayK5N5O5VBbIQq9JlkFNXUeeUvNfuSp0",
   authDomain: "ikastolako-mantenua.firebaseapp.com",
