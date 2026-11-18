@@ -271,7 +271,7 @@ body.dragging{overflow:hidden}
 <div class="imp" id="impBar" hidden><b>Datuak inportatu</b><span>Aukeratu <i>mantenua-datuak.json</i> fitxategia (Claude-ko aplikaziotik ekarritako datuak).</span><label class="btn sm pri">Fitxategia aukeratu<input type="file" id="impF" accept=".json,application/json" hidden></label><button class="btn sm" id="impX">Itxi</button><small id="impS"></small></div>
 <div class="pv" id="pv" hidden><div class="pvb"><button class="btn sm" id="pvX">✕ Itxi</button><span id="pvT"></span><button class="btn sm pri" id="pvD" hidden>Deskargatu</button></div><div id="pvC"></div></div>
 
-<script src="config.js"></script>
+<script>window.FIREBASE_CONFIG={apiKey:"AIzaSyCayK5N5O5VBbIQq9JlkFNXUeeUvNfuSp0",authDomain:"ikastolako-mantenua.firebaseapp.com",projectId:"ikastolako-mantenua",storageBucket:"ikastolako-mantenua.firebasestorage.app",messagingSenderId:"231877710141",appId:"1:231877710141:web:3457d3798389f599fef554"};</script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -630,21 +630,20 @@ const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const EV={bilera:{l:"Bilera",s:"Bil."},jai:{l:"Jaieguna",s:"Jai"},opor:{l:"Oporrak",s:"Opor"},goiz:{l:"Goizez",s:"Goiz"}};
 const evOn=k=>events.filter(e=>e.date&&e.date<=k&&k<=(e.type==="bilera"?e.date:(e.end||e.date)));
 function evRow(e){const r=e.type!=="bilera"&&e.end&&e.end!==e.date?`${fmtD(e.date)} – ${fmtD(e.end)}`:"";
- return `<button class="ev ev-${e.type}" data-ev="${esc(e.id)}"><span class="evk">${EV[e.type].l}${e.time?" · "+esc(e.time):""}</span><span class="evt">${esc(e.title||EV[e.type].l)}</span>${e.place||r?`<span class="evs">${[r,esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`}
+ return `<button class="ev ev-${e.type}" data-ev="${esc(e.id)}">${e.type!=="bilera"||e.time?`<span class="evk">${[e.type!=="bilera"?EV[e.type].l:"",esc(e.time||"")].filter(Boolean).join(" · ")}</span>`:""}<span class="evt">${esc(e.title||(e.type==="bilera"?"—":EV[e.type].l))}</span>${e.place||r?`<span class="evs">${[r,esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`}
 function editEv(e,pre){const n=!e;e=e?cl(e):Object.assign({id:uid("e"),type:"bilera",title:"",date:today,end:"",time:"",place:"",notes:""},pre||{});
- sheet(`<h3>${n?"Gertaera berria":EV[e.type].l}</h3>
- <label class="f">Mota<select id="eT">${Object.entries(EV).map(([k,v])=>`<option value="${k}"${k===e.type?" selected":""}>${v.l}</option>`).join("")}</select></label>
- <label class="f">Izenburua<input id="eN" value="${esc(e.title)}" placeholder="Adib.: Zuzendaritzarekin bilera, Gabonetako oporrak"></label>
+ sheet(`<h3>${n?"Berria":esc(e.title||EV[e.type].l)}</h3>
+ <label class="f">Izenburua<input id="eN" value="${esc(e.title)}" placeholder="Zer da?"></label>
  <div class="row2"><label class="f">Data<input type="date" id="eD" value="${esc(e.date)}"></label>
  <label class="f" id="eEw">Amaiera<input type="date" id="eE" value="${esc(e.end||e.date)}"></label>
  <label class="f" id="eHw">Ordua<input type="time" id="eH" value="${esc(e.time)}"></label></div>
  <label class="f" id="ePw">Lekua<input id="eP" value="${esc(e.place)}" placeholder="Adib.: Zuzendaritza, Irakasle gela"></label>
  <label class="f">Oharrak<textarea id="eO" placeholder="Gaia, nor etorriko den…">${esc(e.notes)}</textarea></label>
  <div class="acts">${n?"":'<button class="btn danger" id="eX">Ezabatu</button>'}<span class="grow"></span><button class="btn" id="eC">Utzi</button><button class="btn pri" id="eG">Gorde</button></div>`);
- const sync=()=>{const b=$("eT").value==="bilera";$("eEw").hidden=b;$("eHw").hidden=!b;$("ePw").hidden=!b};sync();$("eT").onchange=sync;
+ {const b=e.type==="bilera";$("eEw").hidden=b;$("eHw").hidden=!b;$("ePw").hidden=!b}
  if(n)setTimeout(()=>$("eN").focus(),0);
  $("eC").onclick=close;
- $("eG").onclick=()=>{const d=$("eD").value;if(!d){$("eD").focus();return}const ty=$("eT").value;let en=ty==="bilera"?"":($("eE").value||d);if(en<d)en=d;
+ $("eG").onclick=()=>{const d=$("eD").value;if(!d){$("eD").focus();return}const ty=e.type;let en=ty==="bilera"?"":($("eE").value||d);if(en<d)en=d;
   Object.assign(e,{type:ty,title:$("eN").value.trim(),date:d,end:en,time:ty==="bilera"?$("eH").value:"",place:ty==="bilera"?$("eP").value.trim():"",notes:$("eO").value.trim()});
   const i=events.findIndex(x=>x.id===e.id);if(i>=0)events[i]=e;else events.push(e);put("events",e);close()};
  const x=$("eX");if(x)x.onclick=()=>{if(x.dataset.a!=="1"){x.dataset.a="1";x.textContent="Benetan ezabatu?";return}events=events.filter(y=>y.id!==e.id);del("events",e.id);close()}}
@@ -670,7 +669,7 @@ function offDays(ty){const set=new Set();let a=null,z=null;{const y=+TY().slice(
  const n=set.size;return n+(n===1?" egun":" egun")}
 function cellItems(ev,ts,k){const it=[];
  revs.filter(r=>nextRev(r)===k).forEach(r=>it.push(`<span class="ci c-rev">${esc(r.name)}</span>`));
- const two=(e)=>`<span class="ci2 c-${e.type}"><b class="tp">${e.time?`<span>${esc(e.time)}</span> `:""}<span>${EV[e.type].l}</span></b>${e.title?`<span class="tl">${esc(e.title)}</span>`:""}</span>`;
+ const two=(e)=>`<span class="ci2 c-${e.type}">${e.time||e.type!=="bilera"?`<b class="tp">${e.time?`<span>${esc(e.time)}</span> `:""}${e.type!=="bilera"?`<span>${EV[e.type].l}</span>`:""}</b>`:""}${e.title?`<span class="tl">${esc(e.title)}</span>`:""}</span>`;
 
  ev.filter(e=>e.type==="bilera").sort((a,b)=>(a.time||"").localeCompare(b.time||"")).forEach(e=>it.push(two(e)));
  sortT(ts.slice()).forEach(t=>it.push(`<span class="ci ${!open(t)?"c-done":t.prio==="alta"||late(t)?"c-urg":"c-task"}">${esc(t.title)}</span>`));
@@ -686,7 +685,7 @@ function drawCal(V){
  V.innerHTML=`<div class="zone"><div class="calh"><button class="btn sm" id="cp" aria-label="Aurreko hilabetea">‹</button><h2 class="calt">${y}ko ${HIL[m-1].charAt(0).toUpperCase()+HIL[m-1].slice(1)}</h2><button class="btn sm" id="cn" aria-label="Hurrengo hilabetea">›</button><button class="btn sm" id="ct">Gaur</button></div>
  <div class="cal">${AST.map(a=>`<span class="cw${AST.indexOf(a)>=5?" cwe":""}">${a}</span>`).join("")}${cells}</div>
  <div class="leg"><span><i class="lg-j"></i>Jaieguna <b class="lgn">${offDays("jai")}</b></span><span><i class="lg-o"></i>Oporrak <b class="lgn">${offDays("opor")}</b></span><span><i class="lg-g"></i>Goizez <b class="lgn">${offDays("goiz")}</b></span></div>${(()=>{const w=workHours();return `<div class="hrs"><span>Lan-orduak</span><b>${w.done} h</b><small>gaur arte · ${w.total} h ikasturte osoan</small></div>`})()}<div class="note" style="text-align:right">Egunak eta orduak: ${TY()} ikasturtean</div>
- <div class="head2"><h2 class="cdt">${dd.getDate()} ${HIL[dd.getMonth()]}${CD===today?" · gaur":""}</h2></div><div class="acts"><button class="btn sm" id="cbil">+ Bilera</button>${["jai","opor","goiz"].map(ty=>{const on=evOn(CD).some(e=>e.type===ty);return `<button class="btn sm tg tg-${ty}${on?" on":""}" data-tog="${ty}" aria-pressed="${on}">${on?"✓ ":""}${EV[ty].l}</button>`}).join("")}</div>
+ <div class="head2"><h2 class="cdt">${dd.getDate()} ${HIL[dd.getMonth()]}${CD===today?" · gaur":""}</h2></div><div class="acts"><button class="btn sm" id="cbil">+ Gehitu</button>${["jai","opor","goiz"].map(ty=>{const on=evOn(CD).some(e=>e.type===ty);return `<button class="btn sm tg tg-${ty}${on?" on":""}" data-tog="${ty}" aria-pressed="${on}">${on?"✓ ":""}${EV[ty].l}</button>`}).join("")}</div>
  ${evs.length?`<div class="list">${evs.map(evRow).join("")}</div>`:""}${(()=>{const rr=revs.filter(r=>nextRev(r)===CD);return rr.length?`<div class="list">${rr.map(revRow).join("")}</div>`:""})()}
  ${evs.length||revs.some(r=>nextRev(r)===CD)?"":`<div class="empty">Ez dago ezer egun honetarako.</div>`}
  </div>`;
