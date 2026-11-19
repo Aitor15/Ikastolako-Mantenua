@@ -198,7 +198,7 @@ h1{color:var(--acc)}
 .fic{width:44px;height:44px;border-radius:6px;display:grid;place-items:center;background:var(--urg-soft);color:var(--urg);font-weight:800;font-size:12px;flex:none}
 .fi a{flex:1;min-width:0;color:var(--acc);font-weight:600;overflow-wrap:anywhere;font-size:14px}
 .btn.up{align-self:flex-start;text-transform:none;letter-spacing:0;cursor:pointer}
-.seg button{font-size:13px;padding:9px 4px}
+.seg{flex-wrap:wrap}.seg button{flex:1 1 auto;font-size:13px;padding:9px 8px;line-height:1.2;white-space:nowrap}
 .srch{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:16px}
 .task.st{grid-template-columns:1fr auto;align-items:start}
 .sx{border:1px solid var(--line);background:transparent;color:var(--mute);border-radius:8px;min-width:32px;height:32px;padding:0 8px;font-size:14px;line-height:1}
@@ -306,7 +306,7 @@ body.dragging{overflow:hidden}
  </header>
  <section class="kpis" id="kpis" aria-label="Laburpena" hidden></section>
  <div id="avis" hidden></div>
-<nav class="seg" aria-label="Ikuspegia"><button id="vRooms" class="on">Mantenu lanak</button><button id="vAll">Berrikuspenak</button><button id="vDoc">Fakturak</button><button id="vStaff">Langileak</button><button id="vCal">Egutegia</button></nav>
+<nav class="seg" aria-label="Ikuspegia"><button id="vRooms" class="on">Mantenu lanak</button><button id="vAll">Berrikuspenak</button><button id="vDoc">Aurrekontuak/<wbr>Fakturak</button><button id="vStaff">Langileak</button><button id="vCal">Egutegia</button></nav>
  <label class="jump"><span>Joan gelara</span><select id="jump" aria-label="Joan gelara"></select></label>
  <main id="view"></main>
  <footer class="fu" id="fUser" hidden><span id="fMe"></span> · <button class="lnk" id="fBk">Kopia deskargatu</button> · <button class="lnk" id="fOut">Saioa itxi</button></footer>
