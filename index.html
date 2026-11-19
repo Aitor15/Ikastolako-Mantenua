@@ -260,6 +260,7 @@ body.dragging{overflow:hidden}
 .av:not(.bihar){animation:avp 1.1s ease-in-out infinite}
 @keyframes avp{0%,100%{box-shadow:0 0 0 0 rgba(255,182,39,0);filter:brightness(1)}50%{box-shadow:0 0 0 5px rgba(255,182,39,.55),0 0 26px 6px rgba(255,182,39,.75);filter:brightness(1.18)}}
 @media (prefers-reduced-motion:reduce){.av{animation:none!important}}
+.evn{font-weight:400;color:var(--mute)}
 </style>
 
 <div class="wrap">
@@ -642,7 +643,7 @@ const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const EV={bilera:{l:"Bilera",s:"Bil."},jai:{l:"Jaieguna",s:"Jai"},opor:{l:"Oporrak",s:"Opor"},goiz:{l:"Goizez",s:"Goiz"}};
 const evOn=k=>events.filter(e=>e.date&&e.date<=k&&k<=(e.type==="bilera"?e.date:(e.end||e.date)));
 function evRow(e){const r=e.type!=="bilera"&&e.end&&e.end!==e.date?`${fmtD(e.date)} – ${fmtD(e.end)}`:"";
- return `<button class="ev ev-${e.type}" data-ev="${esc(e.id)}">${e.type!=="bilera"||e.time?`<span class="evk">${[e.type!=="bilera"?EV[e.type].l:"",esc(e.time||"")].filter(Boolean).join(" · ")}</span>`:""}<span class="evt">${esc(e.title||(e.type==="bilera"?"—":EV[e.type].l))}</span>${e.place||r?`<span class="evs">${[r,esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`}
+ return `<button class="ev ev-${e.type}" data-ev="${esc(e.id)}">${e.type!=="bilera"||e.time?`<span class="evk">${[e.type!=="bilera"?EV[e.type].l:"",esc(e.time||"")].filter(Boolean).join(" · ")}</span>`:""}<span class="evt">${esc(e.title||(e.type==="bilera"?"—":EV[e.type].l))}${e.notes?`<span class="evn"> · ${esc(e.notes)}</span>`:""}</span>${e.place||r?`<span class="evs">${[r,esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`}
 function editEv(e,pre){const n=!e;e=e?cl(e):Object.assign({id:uid("e"),type:"bilera",title:"",date:today,end:"",time:"",place:"",notes:""},pre||{});
  sheet(`<h3>${n?"Berria":esc(e.title||EV[e.type].l)}</h3>
  <label class="f">Izenburua<input id="eN" value="${esc(e.title)}" placeholder="Zer da?"></label>
