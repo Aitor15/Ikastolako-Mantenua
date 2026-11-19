@@ -584,7 +584,7 @@ function bindRev(V){
  V.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{const r=revs.find(x=>x.id===b.dataset.rd);isExtProto(r)?openProto(r):logRev(r)});
  V.querySelectorAll("[data-re]").forEach(b=>b.onclick=()=>editRev(revs.find(x=>x.id===b.dataset.re)))}
 const SUG=[["Su-itzalgailuak",1,"urte"],["Larrialdiko argiak",6,"hil"],["Berogailu galdara",1,"urte"],["Igogailua",1,"hil"],["Ur-hodien legionela kontrola",1,"hil"],["Patioko jolasak",3,"hil"]];
-let RGL={},RGF={};const RG_FOLD=[];const hasFolder=r=>!!r&&(isExtProto(r)||r.folder||/TXIMINI/i.test(r.name||""));const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
+let RGL={},RGF={};const RG_FOLD=[];const hasFolder=r=>!!r&&(isExtProto(r)||r.folder||/TXIMINI|EXTRAKTOR/i.test(r.name||""));const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
 const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS",...revs.map(r=>r.group).filter(Boolean)])].sort();
 /* ---------- Protokolo-txantiloiak (PDF gainean betetzeko) ---------- */
 const PROTOS={};
