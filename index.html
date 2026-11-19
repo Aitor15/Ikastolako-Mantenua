@@ -576,7 +576,7 @@ function revRow(r){const st=revState(r),sp=r.space&&sp_(r.space);
  return `<div class="task rev rv-${st[0]}"><div class="tb" data-re="${esc(r.id)}"><div class="tt">${esc(r.name)}</div>
  <div class="ts"><span>${freqTxt(r)}</span>${sp?`<span>${esc(sp.name)}</span>`:r.place?`<span>${esc(r.place)}</span>`:""}</div>
  <div class="rvd"><span>Azken errebisioa: <b>${r.last?fmtY(r.last):"inoiz ez"}</b></span><span>Hurrengoa: <b>${fmtY(nextRev(r))}</b></span>${revLog(r).length?`<span>Erregistroak: <b>${revLog(r).length}</b></span>`:""}</div>${(()=>{const l=revLog(r)[0];return l&&l.n?`<div class="rvl">“${esc(l.n)}”</div>`:""})()}</div>
- <div class="rvr"><span class="rb ${st[0]}">${st[1]}</span><small>${st[2]}</small>${isExtProto(r)?`<button class="btn sm pri" data-rp="${esc(r.id)}">📋 Protokoloa bete</button><button class="btn sm" data-rf="${esc(r.id)}">📁 Karpeta (${revLog(r).filter(e=>e.form).length+(r.files||[]).length})</button>`:`<button class="btn sm rdo" data-rd="${esc(r.id)}">✓ Eginda</button>`}</div></div>`}
+ <div class="rvr"><span class="rb ${st[0]}">${st[1]}</span><small>${st[2]}</small>${isExtProto(r)?`<button class="btn sm pri" data-rp="${esc(r.id)}">📋 Protokoloa bete</button><button class="btn sm" data-rf="${esc(r.id)}">📁 Karpeta (${revLog(r).filter(e=>e.form).length+(r.files||[]).length})</button>`:`<button class="btn sm rdo" data-rd="${esc(r.id)}">✓ Eginda</button>${hasFolder(r)?`<button class="btn sm" data-rf="${esc(r.id)}">📁 Karpeta (${(r.files||[]).length})</button>`:""}`}</div></div>`}
 const sp_=id=>spaces.find(s=>s.id===id);
 function bindRev(V){
  V.querySelectorAll("[data-rf]").forEach(b=>b.onclick=()=>pxFolder(revs.find(x=>x.id===b.dataset.rf)));
@@ -584,7 +584,7 @@ function bindRev(V){
  V.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{const r=revs.find(x=>x.id===b.dataset.rd);isExtProto(r)?openProto(r):logRev(r)});
  V.querySelectorAll("[data-re]").forEach(b=>b.onclick=()=>editRev(revs.find(x=>x.id===b.dataset.re)))}
 const SUG=[["Su-itzalgailuak",1,"urte"],["Larrialdiko argiak",6,"hil"],["Berogailu galdara",1,"urte"],["Igogailua",1,"hil"],["Ur-hodien legionela kontrola",1,"hil"],["Patioko jolasak",3,"hil"]];
-let RGL={};const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
+let RGL={},RGF={};const RG_FOLD=[];const hasFolder=r=>!!r&&(isExtProto(r)||r.folder||/TXIMINI/i.test(r.name||""));const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
 const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS",...revs.map(r=>r.group).filter(Boolean)])].sort();
 /* ---------- Protokolo-txantiloiak (PDF gainean betetzeko) ---------- */
 const PROTOS={};
@@ -727,13 +727,27 @@ async function protoPdf(T,P){if(!PDFLIB){await loadScript("https://cdnjs.cloudfl
 const pxPdf=P=>protoPdf(PROTOS.ext,P);
 function unb64x(s){const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
 const fileBlob=f=>getBlob(f.id);
-function pxFolder(r){if(!r)return;const T=protoOf(r);const L=revLog(r).filter(e=>e.form),FL=(r.files||[]).slice().sort((a,b)=>(b.at||"").localeCompare(a.at||""));
- sheet(`<h3>📁 ${esc(r.name)}</h3><div class="note">Betetako protokoloak (${L.length})${FL.length?` · inportatuak (${FL.length})`:""}</div>
+function gFolder(g){const FL=(RGF[g]||[]).slice().sort((a,b)=>(b.at||"").localeCompare(a.at||""));
+ sheet(`<h3>📁 ${esc(g)}</h3><div class="note">Fitxategiak (${FL.length})</div>
+ <div class="fl">${FL.map((f,i)=>`<div class="fi pfi"><span class="fic">${/pdf/.test(f.type)?"PDF":"📄"}</span><a href="#" data-io="${i}">${esc(f.name)}<small>${f.at?fmtY(f.at):""}</small></a><button class="btn sm" data-id="${i}">⬇︎</button><button class="btn sm" data-ix="${i}">✕</button></div>`).join("")||`<div class="note">Oraindik ez dago fitxategirik.</div>`}</div>
+ ${AS?`<label class="btn sm up" for="gfU" style="align-self:flex-start">⬆︎ PDF inportatu</label><input type="file" id="gfU" accept="application/pdf,image/*" multiple hidden><span class="note" id="gfUs"></span>`:""}
+ <div class="acts"><span class="grow"></span><button class="btn" id="gfX">Itxi</button></div>`);
+ const S=$("sheet"),save=L=>{RGF={...RGF,[g]:L};if(DB)DB.collection("config").doc("rgfiles").set({files:RGF}).catch(()=>toast("Ezin izan da gorde"));gFolder(g);render()};
+ $("gfX").onclick=close;
+ S.querySelectorAll("[data-io]").forEach(a=>a.onclick=ev=>{ev.preventDefault();openFile(FL[+a.dataset.io])});
+ S.querySelectorAll("[data-id]").forEach(b=>b.onclick=async()=>{const f=FL[+b.dataset.id];b.textContent="…";try{if(!DL)throw 0;await DL.save({filename:f.name,data:await fileBlob(f)})}catch(x){if(!(x&&x.code==="declined"))toast("Ezin izan da deskargatu")}b.textContent="⬇︎"});
+ S.querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>{if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur?";return}const f=FL[+b.dataset.ix];if(AS)AS.delete(f.id).catch(()=>{});save((RGF[g]||[]).filter(y=>y.id!==f.id))});
+ const up=$("gfU");if(up)up.onchange=async()=>{const fs=[...up.files];up.value="";if(!fs.length)return;const L=[...(RGF[g]||[])];
+  for(const f of fs){if(f.size>15*1024*1024){toast(f.name+": handiegia");continue}$("gfUs").textContent="Igotzen: "+f.name+"…";const ty=f.type||(/\.pdf$/i.test(f.name)?"application/pdf":"");
+   try{const u=await AS.upload(f,ty?{type:ty}:undefined);L.push({id:u.id,name:f.name,type:u.contentType||ty,size:u.sizeBytes||f.size,at:today})}catch(e){toast(f.name+": ezin izan da igo")}}
+  save(L)}}
+function pxFolder(r){if(!r)return;const T=protoOf(r)||{file:"Dokumentua"};const L=revLog(r).filter(e=>e.form),FL=(r.files||[]).slice().sort((a,b)=>(b.at||"").localeCompare(a.at||""));
+ sheet(`<h3>📁 ${esc(r.name)}</h3><div class="note">${protoOf(r)?`Betetako protokoloak (${L.length})${FL.length?` · inportatuak (${FL.length})`:""}`:`Fitxategiak (${FL.length})`}</div>
  <div class="fl">${L.length?L.map(e=>`<div class="fi pfi"><span class="fic">PDF</span><a href="#" data-fo="${esc(e.k)}">${esc(e.pdf?e.pdf.name:`${T.file}_${e.d}.pdf`)}<small>${fmtY(e.d)} · ${esc(e.n||"")}</small></a><button class="btn sm" data-fd="${esc(e.k)}">⬇︎</button><button class="btn sm" data-fe="${esc(e.k)}">📋</button><button class="btn sm" data-fx="${esc(e.k)}">✕</button></div>`).join(""):""}${FL.map((f,i)=>`<div class="fi pfi"><span class="fic">${/pdf/.test(f.type)?"PDF":"📄"}</span><a href="#" data-io="${i}">${esc(f.name)}<small>${f.at?fmtY(f.at)+" · ":""}inportatua</small></a><button class="btn sm" data-id="${i}">⬇︎</button><button class="btn sm" data-ix="${i}">✕</button></div>`).join("")}${!L.length&&!FL.length?`<div class="note">Oraindik ez dago ezer.</div>`:""}</div>
  ${AS?`<label class="btn sm up" for="pfU" style="align-self:flex-start">⬆︎ PDF inportatu</label><input type="file" id="pfU" accept="application/pdf,image/*" multiple hidden><span class="note" id="pfUs"></span>`:""}
- <div class="acts"><span class="grow"></span><button class="btn" id="pfX">Itxi</button><button class="btn pri" id="pfN">📋 Berria bete</button></div>`);
+ <div class="acts"><span class="grow"></span><button class="btn" id="pfX">Itxi</button>${protoOf(r)?`<button class="btn pri" id="pfN">📋 Berria bete</button>`:""}</div>`);
  const get=async e=>e.pdf?await fileBlob(e.pdf):await protoPdf(T,e.form),nm=e=>e.pdf?e.pdf.name:`${T.file}_${e.d}.pdf`,F=k=>L.find(e=>e.k===k);
- $("pfX").onclick=close;$("pfN").onclick=()=>openProto(r);
+ $("pfX").onclick=close;if($("pfN"))$("pfN").onclick=()=>openProto(r);
  const S=$("sheet");S.querySelectorAll("[data-fe]").forEach(b=>b.onclick=()=>openProto(r,b.dataset.fe));
  S.querySelectorAll("[data-fo]").forEach(a=>a.onclick=async ev=>{ev.preventDefault();const e=F(a.dataset.fo);try{if(e.pdf)openFile(e.pdf);else viewBlob(await protoPdf(T,e.form),nm(e))}catch(x){toast("Ezin izan da ireki")}});
  const saveR=x=>{const i=revs.findIndex(y=>y.id===x.id);if(i>=0)revs[i]=x;put("revs",x);pxFolder(x)};
@@ -761,13 +775,14 @@ const DET_PDF="JVBERi0xLjUNCiW1tbW1DQoxIDAgb2JqDQo8PC9UeXBlL0NhdGFsb2cvUGFnZXMgM
 function drawRev(V){const L=revs.slice().sort((a,b)=>nextRev(a).localeCompare(nextRev(b)));
  const late=L.filter(r=>daysTo(nextRev(r))<=0).length,soon=L.filter(r=>{const n=daysTo(nextRev(r));return n>0&&n<=30}).length;
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Errebisio periodikoak</h2><button class="btn sm pri" id="rN">+ Errebisio berria</button></div>
- ${L.length?`<div class="note">${late?`<b style="color:var(--urg)">${late} egiteko gaur edo epez kanpo</b> · `:""}${soon} hurrengo 30 egunetan · ${L.length} guztira</div>${(()=>{const G=revGroups(),U=L.filter(r=>!r.group);return (U.length?`<div class="list">${U.map(revRow).join("")}</div>`:"")+G.map(g=>{const R=L.filter(r=>r.group===g),lt=R.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg" data-rg="${esc(g)}"${RGO.has(g)?" open":""}><summary><label class="rgl" title="Logoa">${RGL[g]?gImg(RGL[g]):"＋"}<input type="file" accept="image/*" hidden data-rgu="${esc(g)}"></label><span class="rgn">${esc(g)}</span><span class="rgc">${R.length}${lt?` · <b style="color:var(--urg)">${lt} egiteko</b>`:""}</span><button class="btn sm" data-rga="${esc(g)}">+</button></summary><div class="list">${R.map(revRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")})()}`:
+ ${L.length?`<div class="note">${late?`<b style="color:var(--urg)">${late} egiteko gaur edo epez kanpo</b> · `:""}${soon} hurrengo 30 egunetan · ${L.length} guztira</div>${(()=>{const G=revGroups(),U=L.filter(r=>!r.group);return (U.length?`<div class="list">${U.map(revRow).join("")}</div>`:"")+G.map(g=>{const R=L.filter(r=>r.group===g),lt=R.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg" data-rg="${esc(g)}"${RGO.has(g)?" open":""}><summary><label class="rgl" title="Logoa">${RGL[g]?gImg(RGL[g]):"＋"}<input type="file" accept="image/*" hidden data-rgu="${esc(g)}"></label><span class="rgn">${esc(g)}</span><span class="rgc">${R.length}${lt?` · <b style="color:var(--urg)">${lt} egiteko</b>`:""}</span>${RG_FOLD.includes(g)?`<button class="btn sm" data-rgf="${esc(g)}">📁 ${(RGF[g]||[]).length}</button>`:""}<button class="btn sm" data-rga="${esc(g)}">+</button></summary><div class="list">${R.map(revRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")})()}`:
  `<div class="empty"><p>Oraindik ez dago errebisiorik.<br>Gehitu aldian behin egin behar dituzun errebisioak (su-itzalgailuak, galdara…), eta app-ak esango dizu noiz dagokien hurrengoa.</p><p class="note">Ideia batzuk, sakatu gehitzeko:</p><div class="filters" style="justify-content:center">${SUG.map((x,i)=>`<button class="chip" data-sug="${i}">+ ${x[0]} · ${freqTxt({n:x[1],u:x[2]})}</button>`).join("")}</div></div>`}</div>`;
  $("rN").onclick=()=>editRev();
  V.querySelectorAll("details[data-rg]").forEach(d=>d.ontoggle=()=>{d.open?RGO.add(d.dataset.rg):RGO.delete(d.dataset.rg)});
  V.querySelectorAll(".rgl").forEach(l=>l.onclick=ev=>ev.stopPropagation());
  V.querySelectorAll("[data-rgu]").forEach(inp=>inp.onchange=async()=>{const f=inp.files[0],g=inp.dataset.rgu;inp.value="";if(!f)return;if(!AS){toast("Ezin da logoa igo hemen");return}
   try{const r=await AS.upload(f,{type:f.type||"image/png"});const old=RGL[g];RGL={...RGL,[g]:r.id};if(DB)await DB.collection("config").doc("rgroups").set({logos:RGL});render();if(old)try{await AS.delete(old)}catch(x){}}catch(x){toast("Ezin izan da logoa igo")}});
+ V.querySelectorAll("[data-rgf]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();gFolder(b.dataset.rgf)});
  V.querySelectorAll("[data-rga]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();editRev(null,{group:b.dataset.rga})});
  V.querySelectorAll("[data-sug]").forEach(b=>b.onclick=()=>{const x=SUG[+b.dataset.sug];editRev(null,{name:x[0],n:x[1],u:x[2]})});
  bindRev(V)}
@@ -1024,7 +1039,7 @@ function start(){const err=e=>{if(e&&e.code==="permission-denied")denied(FBU);el
  DB=FB;spaces=[];ALL=[];events=[];revs=[];docs=[];staff=[];render();
  const on=(c,f)=>SUBS.push(FB.collection(c).onSnapshot(f,err));
  on("spaces",s=>{spaces=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();imp(s)});
- on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};if(Array.isArray(z))ZU=z;render()});
+ on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};if(Array.isArray(z))ZU=z;render()});
  on("staff",s=>{staff=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("docs",s=>{docs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();if(!$("ov").hidden&&window._docRefresh)window._docRefresh()});
  on("revs",s=>{revs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
