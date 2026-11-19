@@ -741,6 +741,12 @@ function openProto(r,k){r=cl(r);const T=protoOf(r);if(!T)return;const L=revLog(r
   const i=revs.findIndex(y=>y.id===x.id);if(i>=0)revs[i]=x;put("revs",x);close();toast(x.name+": protokoloa gordeta")};
  const xb=$("pxX");if(xb)xb.onclick=()=>{if(xb.dataset.a!=="1"){xb.dataset.a="1";xb.textContent="Benetan ezabatu?";return}if(ent.pdf&&AS)AS.delete(ent.pdf.id).catch(()=>{});const x=cl(r);x.log=revLog(x).filter(e=>e.k!==ent.k);x.last=x.log[0]?x.log[0].d:"";const i=revs.findIndex(y=>y.id===x.id);if(i>=0)revs[i]=x;put("revs",x);close()}}
 let PDFLIB=null;
+async function img2pdf(file){if(!PDFLIB){await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js");PDFLIB=window.PDFLib}
+ const url=URL.createObjectURL(file);const im=await new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=url});
+ const k=Math.min(1,2000/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.round(im.naturalWidth*k),hh=Math.round(im.naturalHeight*k);const c=document.createElement("canvas");c.width=w;c.height=hh;c.getContext("2d").drawImage(im,0,0,w,hh);URL.revokeObjectURL(url);
+ const jpg=await new Promise(ok=>c.toBlob(ok,"image/jpeg",.82));const doc=await PDFLIB.PDFDocument.create();const ji=await doc.embedJpg(new Uint8Array(await jpg.arrayBuffer()));
+ const land=w>hh,PW=land?842:595,PH=land?595:842,s=Math.min((PW-40)/w,(PH-40)/hh);const p=doc.addPage([PW,PH]);p.drawImage(ji,{x:(PW-w*s)/2,y:(PH-hh*s)/2,width:w*s,height:hh*s});
+ const n=new Date(),z=v=>String(v).padStart(2,"0");return new File([await doc.save()],`Argazkia ${today} ${z(n.getHours())}-${z(n.getMinutes())}.pdf`,{type:"application/pdf"})}
 async function protoPdf(T,P){if(!PDFLIB){await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js");PDFLIB=window.PDFLib}
  const {PDFDocument,StandardFonts,rgb}=PDFLIB;const doc=await PDFDocument.load(unb64x(T.b64()));const f=await doc.embedFont(StandardFonts.Helvetica),fb=await doc.embedFont(StandardFonts.HelveticaBold);
  const pg=doc.getPages(),H=841.8,blue=rgb(.05,.15,.55);const clean=s=>String(s||"").replace(/[^\x20-\x7E\xA0-\xFF€]/g,"");
@@ -780,7 +786,7 @@ async function orphanFiles(){const used=new Set();const add=f=>{if(f&&f.id)used.
 function pxFolder(r){if(!r)return;const T=protoOf(r)||{file:"Dokumentua"};const L=revLog(r).filter(e=>e.form),FL=(r.files||[]).slice().sort((a,b)=>(b.at||"").localeCompare(a.at||""));
  sheet(`<h3>📁 ${esc((r.sys?r.sys+" · ":"")+r.name)}</h3><div class="note">${protoOf(r)?`Betetako protokoloak (${L.length})${FL.length?` · inportatuak (${FL.length})`:""}`:`Fitxategiak (${FL.length})`}</div>
  <div class="fl">${L.length?L.map(e=>`<div class="fi pfi"><span class="fic">PDF</span><a href="#" data-fo="${esc(e.k)}">${esc(e.pdf?e.pdf.name:`${T.file}_${e.d}.pdf`)}<small>${fmtY(e.d)} · ${esc(e.n||"")}</small></a><button class="btn sm" data-fd="${esc(e.k)}">⬇︎</button><button class="btn sm" data-fe="${esc(e.k)}">📋</button><button class="btn sm" data-fx="${esc(e.k)}">✕</button></div>`).join(""):""}${FL.map((f,i)=>`<div class="fi pfi"><span class="fic">${/pdf/.test(f.type)?"PDF":"📄"}</span><a href="#" data-io="${i}">${esc(f.name)}<small>${f.at?fmtY(f.at)+" · ":""}inportatua</small></a><button class="btn sm" data-id="${i}">⬇︎</button><button class="btn sm" data-ix="${i}">✕</button></div>`).join("")}${!L.length&&!FL.length?`<div class="note">Oraindik ez dago ezer.</div>`:""}</div>
- ${AS?`<label class="btn sm up" for="pfU" style="align-self:flex-start">⬆︎ PDF inportatu</label><input type="file" id="pfU" accept="application/pdf,image/*" multiple hidden><span class="note" id="pfUs"></span>`:""}
+ ${AS?`<div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn sm up" for="pfU">⬆︎ PDF inportatu</label><label class="btn sm up camb" for="pfC">📷 Argazkia atera</label></div><input type="file" id="pfU" accept="application/pdf,image/*" multiple hidden><input type="file" id="pfC" accept="image/*" capture="environment" hidden><span class="note" id="pfUs"></span>`:""}
  <div class="acts"><span class="grow"></span><button class="btn" id="pfX">Itxi</button>${protoOf(r)?`<button class="btn pri" id="pfN">📋 Berria bete</button>`:""}</div>`);
  const get=async e=>e.pdf?await fileBlob(e.pdf):await protoPdf(T,e.form),nm=e=>e.pdf?e.pdf.name:`${T.file}_${e.d}.pdf`,F=k=>L.find(e=>e.k===k);
  $("pfX").onclick=close;if($("pfN"))$("pfN").onclick=()=>openProto(r);
@@ -796,10 +802,12 @@ function pxFolder(r){if(!r)return;const T=protoOf(r)||{file:"Dokumentua"};const 
   S2.querySelectorAll("[data-oo]").forEach(a=>a.onclick=ev=>{ev.preventDefault();openFile(O[+a.dataset.oo])});
   S2.querySelectorAll("[data-oa]").forEach(b=>b.onclick=()=>{const f=O[+b.dataset.oa];const x=cl(revs.find(y=>y.id===r.id)||r);x.files=[...(x.files||[]),{id:f.id,name:f.name||"fitxategia.pdf",type:f.type||"application/pdf",size:f.size||0,at:today}];const i=revs.findIndex(y=>y.id===x.id);if(i>=0)revs[i]=x;put("revs",x);b.textContent="✓";b.disabled=true})}
   catch(e){lb.textContent="Ezin izan da bilatu"}};
- const up=$("pfU");if(up)up.onchange=async()=>{const fs=[...up.files];up.value="";if(!fs.length)return;let x=cl(revs.find(y=>y.id===r.id)||r);x.files=x.files||[];
+ const up=$("pfU"),cam=$("pfC");if(cam)cam.onchange=async()=>{const f=cam.files[0];cam.value="";if(!f)return;$("pfUs").textContent="Argazkia PDF bihurtzen…";try{doUp([await img2pdf(f)])}catch(e){$("pfUs").textContent="";toast("Ezin izan da argazkia PDF bihurtu")}};
+ if(up)up.onchange=()=>{const fs=[...up.files];up.value="";doUp(fs)};
+ async function doUp(fs){if(!fs.length)return;let x=cl(revs.find(y=>y.id===r.id)||r);x.files=x.files||[];
   for(const f of fs){if(f.size>15*1024*1024){toast(f.name+": handiegia");continue}$("pfUs").textContent="Igotzen: "+f.name+"…";const ty=f.type||(/\.pdf$/i.test(f.name)?"application/pdf":"");
    try{const u=await AS.upload(f,ty?{type:ty}:undefined);x.files.push({id:u.id,name:f.name,type:u.contentType||ty,size:u.sizeBytes||f.size,at:today})}catch(e){toast(f.name+": ezin izan da igo")}}
-  saveR(x)};
+  $("pfUs").textContent="";saveR(x)}
  S.querySelectorAll("[data-fx]").forEach(b=>b.onclick=()=>{if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur?";return}const e=F(b.dataset.fx);if(e.pdf&&AS)AS.delete(e.pdf.id).catch(()=>{});
   const x=cl(revs.find(y=>y.id===r.id)||r);x.log=revLog(x).filter(y=>y.k!==e.k);x.last=x.log[0]?x.log[0].d:"";const i=revs.findIndex(y=>y.id===x.id);if(i>=0)revs[i]=x;put("revs",x);pxFolder(x)});
  S.querySelectorAll("[data-fd]").forEach(b=>b.onclick=async()=>{const e=F(b.dataset.fd);b.textContent="…";try{if(!DL)throw 0;await DL.save({filename:nm(e),data:await get(e)})}catch(x){if(!(x&&x.code==="declined"))toast("Ezin izan da deskargatu")}b.textContent="⬇︎"})}
