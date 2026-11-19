@@ -267,7 +267,7 @@ body.dragging{overflow:hidden}
 .rg{margin-top:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
 .rg>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}.rg>summary::-webkit-details-marker{display:none}
 .rg>summary::before{content:"▸";color:var(--mute);transition:transform .15s}.rg[open]>summary::before{transform:rotate(90deg)}
-.rgl{width:34px;height:34px;flex:none;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#8593a8;font-size:18px;cursor:pointer;border:1px solid var(--line)}.rgl img{width:100%;height:100%;object-fit:contain}
+.rgl{width:34px;height:34px;flex:none;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#8593a8;font-size:18px;border:1px solid var(--line)}.rgl img{width:100%;height:100%;object-fit:contain}
 .rgn{font:700 18px/1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--acc)}.rgc{flex:1;color:var(--mute);font-size:13px}
 .rg>.list{padding:0 10px 10px}
 .pxs{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}.pxs>b,.pxh b{font:700 15px/1.2 var(--display);text-transform:uppercase;letter-spacing:.04em;color:var(--acc)}
@@ -295,6 +295,8 @@ body.dragging{overflow:hidden}
 .pfi a{display:flex;flex-direction:column;gap:2px}.pfi a small{color:var(--mute);font-size:12px;font-weight:400}
 .pff[style*="--fs"]{font-size:calc(var(--s)*var(--fs)*1px)}.pfy[style*="--fs"]{font-size:calc(var(--s)*var(--fs)*1px)}.pff.ctr{text-align:center}.pfa.mid{text-align:center;display:flex}
 .pfx{position:absolute;background:repeating-linear-gradient(135deg,rgba(60,66,80,.28) 0 3px,rgba(60,66,80,.12) 3px 6px);pointer-events:none}
+.dsub{padding:0 10px 10px;display:flex;flex-direction:column;gap:8px}.rg.rs{margin-top:0;background:var(--bg)}.rg.rs .rgn{font-size:15px;color:var(--ink)}.rg.rs>summary{padding:9px 12px}
+.rg.rgm>summary .rgn{font-size:19px}.rg.rc{margin-top:0;background:var(--bg)}.rg.rc>summary{flex-wrap:wrap;row-gap:2px}.rg.rc>summary .rgn{flex:1 1 0;min-width:0}.rg.rc>summary .rgc{order:5;flex-basis:100%;padding-left:20px}.rg.rc .rgn{font-size:16px}.rg.rc .dsub .rg.rs{background:var(--surface)}
 </style>
 
 <div class="wrap">
@@ -509,15 +511,38 @@ function docRow(d){const t=d.task&&ALL.find(x=>x.id===d.task),nf=(d.files||[]).l
  return `<div class="task doc" data-de="${esc(d.id)}" style="grid-template-columns:auto 1fr auto;cursor:pointer"><span class="dk dk-${d.kind}">${d.kind==="fakt"?"F":"A"}</span>
  <div class="tb"><div class="tt">${esc(d.title||DK[d.kind])}</div><div class="ts">${d.provider?`<span>${esc(d.provider)}</span>`:""}<span>${fmtD(d.date)}</span>${t?`<span>OT-${String(t.ot).padStart(4,"0")}</span>`:""}${nf?`<span>📎 ${nf}</span>`:""}</div></div>
  <div class="dr"><b>${d.amount?eur(d.amount):""}</b><span class="rb ${DSC[d.status]||"ry"}">${(DS[d.kind]||{})[d.status]||""}</span></div></div>`}
+const DGO=new Set();
 function drawDocs(V){const all=docsInYear(),L=all.filter(d=>dfilt==="all"||d.kind===dfilt).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
  const F=all.filter(d=>d.kind==="fakt"),tot=F.reduce((a,d)=>a+(+d.amount||0),0),pay=F.filter(d=>d.status==="ordaintzeko").reduce((a,d)=>a+(+d.amount||0),0),wait=all.filter(d=>d.kind==="aurre"&&d.status==="zain").length;
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Aurrekontuak eta fakturak</h2></div>
- <div class="acts"><button class="btn sm pri" id="dA">+ Aurrekontua</button><button class="btn sm pri" id="dF">+ Faktura</button></div>
+ <div class="acts"><button class="btn sm pri" id="dA">+ Aurrekontua</button><button class="btn sm pri" id="dF">+ Faktura</button><button class="btn sm" id="dE">+ Enpresa</button><button class="btn sm" id="dR">+ Gremioa</button></div>
  <div class="kpis" style="grid-template-columns:minmax(0,1fr)!important"><div class="kpi"><b class="kb">${wait}</b><span>Aurrekontu zain</span></div></div>
  <div class="filters">${[["all","Guztiak"],["aurre","Aurrekontuak"],["fakt","Fakturak"]].map(([k,v])=>`<button class="chip${dfilt===k?" on":""}" data-df="${k}">${v} · ${k==="all"?all.length:all.filter(d=>d.kind===k).length}</button>`).join("")}</div>
- <div class="list">${L.length?L.map(docRow).join(""):`<div class="empty">Ez dago ezer hemen.<br>Sakatu “+ Aurrekontua” edo “+ Faktura” lehena gordetzeko: datuak idatzi eta PDFa edo argazkia erantsi.</div>`}</div></div>`;
+ ${L.length||DCO.length?(()=>{const G={};DCO.forEach(n=>{const k=n.trim().toUpperCase();if(k)G[k]=G[k]||{name:n.trim(),l:[]}});L.forEach(d=>{const p=(d.provider||"").trim(),k=p.toUpperCase()||"~";(G[k]=G[k]||{name:p||"Besteak",l:[]}).l.push(d)});
+  const comp=k=>{const g=G[k],f=g.l.filter(d=>d.kind==="fakt"),sum=f.reduce((a,d)=>a+(+d.amount||0),0),zp=g.l.filter(d=>d.status==="ordaintzeko").length;
+   return `<details class="rg rc" data-dg="${esc(k)}"${DGO.has(k)?" open":""}><summary><span class="rgn">${esc(g.name)}</span><span class="rgc">${g.l.length}${sum?` · ${sum.toLocaleString("eu-ES",{maximumFractionDigits:2})} €`:""}${zp?` · <b style="color:var(--urg)">${zp} ordaintzeko</b>`:""}</span>${k!=="~"?`<button class="btn sm" data-dge="${esc(g.name)}">✎</button><button class="btn sm" data-dgx="${esc(g.name)}">✕</button>`:""}<button class="btn sm" data-dga="${esc(k==="~"?"":g.name)}">+</button></summary><div class="dsub">${[["aurre","Aurrekontuak"],["fakt","Fakturak"]].map(([kd,lb])=>{const s=g.l.filter(d=>d.kind===kd),sk=k+"|"+kd;return `<details class="rg rs" data-dg="${esc(sk)}"${DGO.has(sk)?" open":""}><summary><span class="rgn">${lb}</span><span class="rgc">${s.length}</span><button class="btn sm" data-dga="${esc(k==="~"?"":g.name)}" data-dgk="${kd}">+</button></summary><div class="list">${s.map(docRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")}</div></details>`};
+  const GG={};Object.keys(G).forEach(k=>{const gr=k==="~"?"BESTEAK":gremOf(k);(GG[gr]=GG[gr]||[]).push(k)});
+  return [...GREM,"BESTEAK"].filter(gr=>gr!=="BESTEAK"||GG.BESTEAK).map(gr=>{const ks=(GG[gr]||[]).sort((a,b)=>(a==="~")-(b==="~")||a.localeCompare(b)),n=ks.reduce((s,k)=>s+G[k].l.length,0),zp=ks.reduce((s,k)=>s+G[k].l.filter(d=>d.status==="ordaintzeko").length,0),gk="G:"+gr;
+   return `<details class="rg rgm" data-dg="${esc(gk)}"${DGO.has(gk)?" open":""}><summary><span class="rgn">${gr}</span><span class="rgc">${n}${zp?` · <b style="color:var(--urg)">${zp} ordaintzeko</b>`:""}</span>${gr!=="BESTEAK"?`<button class="btn sm" data-grx="${esc(gr)}">✕</button><button class="btn sm" data-dgn="${esc(gr)}">+</button>`:""}</summary><div class="dsub">${ks.map(comp).join("")||`<div class="note">Enpresarik ez</div>`}</div></details>`}).join("")})():`<div class="empty">Ez dago ezer hemen.<br>Sakatu “+ Aurrekontua” edo “+ Faktura” lehena gordetzeko: datuak idatzi eta PDFa edo argazkia erantsi.</div>`}</div>`;
  $("dA").onclick=()=>editDoc(null,{kind:"aurre"});$("dF").onclick=()=>editDoc(null,{kind:"fakt"});
  V.querySelectorAll("[data-df]").forEach(b=>b.onclick=()=>{dfilt=b.dataset.df;render()});
+ V.querySelectorAll("details[data-dg]").forEach(d=>d.ontoggle=()=>{d.open?DGO.add(d.dataset.dg):DGO.delete(d.dataset.dg)});
+ const saveCo=(L,GM)=>{DCO=L;if(GM)DCG=GM;if(DB)DB.collection("config").doc("companies").set({list:L,gremio:DCG,gremios:GREM}).catch(()=>toast("Ezin izan da gorde"));render()};
+ const grSel=v=>`<label class="f">Gremioa<select id="coR">${GREM.map(g=>`<option${g===v?" selected":""}>${g}</option>`).join("")}</select></label>`;
+ const newCo=gr=>{sheet(`<h3>Enpresa berria</h3><label class="f">Izena<input id="coN" placeholder="Adib.: Lehengoak" autocapitalize="characters"></label>${grSel(gr||GREM[0])}<div class="acts"><span class="grow"></span><button class="btn" id="coC">Utzi</button><button class="btn pri" id="coG">Gorde</button></div>`);setTimeout(()=>$("coN").focus(),0);$("coC").onclick=close;
+  $("coG").onclick=()=>{const n=$("coN").value.trim();if(!n){$("coN").focus();return}const k=n.toUpperCase();const r=$("coR").value;DGO.add(k);DGO.add("G:"+r);close();saveCo(DCO.some(x=>x.trim().toUpperCase()===k)?DCO:[...DCO,n],{...DCG,[k]:r})}};
+ $("dE").onclick=()=>newCo();
+ $("dR").onclick=()=>{sheet(`<h3>Gremio berria</h3><label class="f">Izena<input id="grN" placeholder="Adib.: MARGOLARIAK" autocapitalize="characters"></label><div class="acts"><span class="grow"></span><button class="btn" id="grC">Utzi</button><button class="btn pri" id="grG">Gorde</button></div>`);setTimeout(()=>$("grN").focus(),0);$("grC").onclick=close;
+  $("grG").onclick=()=>{const n=$("grN").value.trim().toUpperCase();if(!n){$("grN").focus();return}if(!GREM.includes(n)&&n!=="BESTEAK")GREM=[...GREM,n];DGO.add("G:"+n);close();saveCo(DCO)}};
+ V.querySelectorAll("[data-grx]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur?";return}const g=b.dataset.grx;GREM=GREM.filter(x=>x!==g);const GM={...DCG};Object.keys(GM).forEach(k=>{if(GM[k]===g)GM[k]="BESTEAK"});saveCo(DCO,GM)});
+ V.querySelectorAll("[data-dgn]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();newCo(b.dataset.dgn)});
+ V.querySelectorAll("[data-dge]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();const old=b.dataset.dge,ok=old.trim().toUpperCase();
+  sheet(`<h3>Enpresa</h3><label class="f">Izena<input id="coN" value="${esc(old)}"></label>${grSel(gremOf(ok))}<div class="acts"><span class="grow"></span><button class="btn" id="coC">Utzi</button><button class="btn pri" id="coG">Gorde</button></div>`);setTimeout(()=>{$("coN").focus();$("coN").select()},0);$("coC").onclick=close;
+  $("coG").onclick=()=>{const n=$("coN").value.trim();if(!n){$("coN").focus();return}const nk=n.toUpperCase();
+   docs.filter(d=>(d.provider||"").trim().toUpperCase()===ok).forEach(d=>{const x=cl(d);x.provider=n;const i=docs.findIndex(y=>y.id===x.id);docs[i]=x;put("docs",x)});
+   const L=DCO.filter(x=>{const u=x.trim().toUpperCase();return u!==ok&&u!==nk});L.push(n);if(DGO.has(ok)){DGO.delete(ok);DGO.add(nk)}const GM={...DCG};delete GM[ok];GM[nk]=$("coR").value;DGO.add("G:"+GM[nk]);close();saveCo(L,GM)}});
+ V.querySelectorAll("[data-dgx]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur?";return}const k=b.dataset.dgx.toUpperCase();docs.filter(d=>(d.provider||"").trim().toUpperCase()===k).forEach(d=>{const x=cl(d);x.provider="";const i=docs.findIndex(y=>y.id===x.id);docs[i]=x;put("docs",x)});saveCo(DCO.filter(x=>x.trim().toUpperCase()!==k))});
+ V.querySelectorAll("[data-dga]").forEach(b=>b.onclick=ev=>{ev.preventDefault();ev.stopPropagation();editDoc(null,{kind:b.dataset.dgk||"fakt",provider:b.dataset.dga})});
  V.querySelectorAll("[data-de]").forEach(b=>b.onclick=()=>editDoc(docs.find(x=>x.id===b.dataset.de)))}
 function editDoc(d,pre){let n=!d;d=d?cl(d):Object.assign({id:uid("d"),kind:"fakt",title:"",provider:"",amount:"",date:today,status:"",task:"",files:[],notes:""},pre||{});
  if(!d.status)d.status=d.kind==="fakt"?"ordaintzeko":"zain";
@@ -527,7 +552,7 @@ function editDoc(d,pre){let n=!d;d=d?cl(d):Object.assign({id:uid("d"),kind:"fakt
  <div class="row2"><label class="f">Mota<select id="dK">${Object.entries(DK).map(([k,v])=>`<option value="${k}"${k===d.kind?" selected":""}>${v}</option>`).join("")}</select></label>
  <label class="f">Egoera<select id="dS"></select></label></div>
  <label class="f">Kontzeptua<input id="dT" value="${esc(d.title)}" placeholder="Adib.: LH3B pertsianak konpontzea"></label>
- <label class="f">Hornitzailea<input id="dP" value="${esc(d.provider)}" list="dpl" placeholder="Enpresaren izena"><datalist id="dpl">${[...new Set(docs.map(x=>x.provider).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
+ <label class="f">Hornitzailea<input id="dP" value="${esc(d.provider)}" list="dpl" placeholder="Enpresaren izena"><datalist id="dpl">${[...new Set([...DCO,...docs.map(x=>x.provider)].filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join("")}</datalist></label>
  <div class="row2"><label class="f">Zenbatekoa (€, BEZ barne)<input type="number" step="0.01" min="0" inputmode="decimal" id="dM" value="${esc(d.amount)}"></label>
  <label class="f">Data<input type="date" id="dD" value="${esc(d.date)}"></label></div>
  <label class="f">Lotutako lana (aukerakoa)<select id="dL"><option value="">— Bat ere ez —</option>${tOpts()}</select></label>
@@ -584,7 +609,10 @@ function bindRev(V){
  V.querySelectorAll("[data-rd]").forEach(b=>b.onclick=()=>{const r=revs.find(x=>x.id===b.dataset.rd);isExtProto(r)?openProto(r):logRev(r)});
  V.querySelectorAll("[data-re]").forEach(b=>b.onclick=()=>editRev(revs.find(x=>x.id===b.dataset.re)))}
 const SUG=[["Su-itzalgailuak",1,"urte"],["Larrialdiko argiak",6,"hil"],["Berogailu galdara",1,"urte"],["Igogailua",1,"hil"],["Ur-hodien legionela kontrola",1,"hil"],["Patioko jolasak",3,"hil"]];
-let RGL={},RGF={};const RG_FOLD=[];const hasFolder=r=>!!r&&(isExtProto(r)||r.folder||/TXIMINI|EXTRAKTOR/i.test(r.name||""));const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
+let RGL={},RGF={},DCO=[],DCG={};
+const GREM0=["ITURGINTZA","ELEKTRIZITATEA","ERREFORMAK","AROTZA","SEGURTASUNA","GARBIKETA","KLIMATIZAZIOA","BEROGAILUA"];let GREM=GREM0.slice();
+const gremOf=k=>{if(DCG[k]==="BESTEAK")return"BESTEAK";if(DCG[k]&&GREM.includes(DCG[k]))return DCG[k];const n=k.toLowerCase(),g=gremGuess(n);return GREM.includes(g)?g:"BESTEAK"};
+const gremGuess=n=>{return /iturgin|fontaner/.test(n)?"ITURGINTZA":/elektri|electri/.test(n)?"ELEKTRIZITATEA":/erreform|eraikun|obra|reform|construc/.test(n)?"ERREFORMAK":/arotz|carpint/.test(n)?"AROTZA":/segurtasun|sute|incendi|lehengoak/.test(n)?"SEGURTASUNA":/garbi|limpi/.test(n)?"GARBIKETA":/klima|clima|protech/.test(n)?"KLIMATIZAZIOA":/berogai|galdar|calefac|tecman/.test(n)?"BEROGAILUA":"BESTEAK"};const RG_FOLD=[];const hasFolder=r=>!!r&&(isExtProto(r)||r.folder||/TXIMINI|EXTRAKTOR/i.test(r.name||""));const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
 const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS",...revs.map(r=>r.group).filter(Boolean)])].sort();
 /* ---------- Protokolo-txantiloiak (PDF gainean betetzeko) ---------- */
 const PROTOS={};
@@ -775,7 +803,7 @@ const DET_PDF="JVBERi0xLjUNCiW1tbW1DQoxIDAgb2JqDQo8PC9UeXBlL0NhdGFsb2cvUGFnZXMgM
 function drawRev(V){const L=revs.slice().sort((a,b)=>nextRev(a).localeCompare(nextRev(b)));
  const late=L.filter(r=>daysTo(nextRev(r))<=0).length,soon=L.filter(r=>{const n=daysTo(nextRev(r));return n>0&&n<=30}).length;
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Errebisio periodikoak</h2><button class="btn sm pri" id="rN">+ Errebisio berria</button></div>
- ${L.length?`<div class="note">${late?`<b style="color:var(--urg)">${late} egiteko gaur edo epez kanpo</b> · `:""}${soon} hurrengo 30 egunetan · ${L.length} guztira</div>${(()=>{const G=revGroups(),U=L.filter(r=>!r.group);return (U.length?`<div class="list">${U.map(revRow).join("")}</div>`:"")+G.map(g=>{const R=L.filter(r=>r.group===g),lt=R.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg" data-rg="${esc(g)}"${RGO.has(g)?" open":""}><summary><label class="rgl" title="Logoa">${RGL[g]?gImg(RGL[g]):"＋"}<input type="file" accept="image/*" hidden data-rgu="${esc(g)}"></label><span class="rgn">${esc(g)}</span><span class="rgc">${R.length}${lt?` · <b style="color:var(--urg)">${lt} egiteko</b>`:""}</span>${RG_FOLD.includes(g)?`<button class="btn sm" data-rgf="${esc(g)}">📁 ${(RGF[g]||[]).length}</button>`:""}<button class="btn sm" data-rga="${esc(g)}">+</button></summary><div class="list">${R.map(revRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")})()}`:
+ ${L.length?`<div class="note">${late?`<b style="color:var(--urg)">${late} egiteko gaur edo epez kanpo</b> · `:""}${soon} hurrengo 30 egunetan · ${L.length} guztira</div>${(()=>{const G=revGroups(),U=L.filter(r=>!r.group);return (U.length?`<div class="list">${U.map(revRow).join("")}</div>`:"")+G.map(g=>{const R=L.filter(r=>r.group===g),lt=R.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg" data-rg="${esc(g)}"${RGO.has(g)?" open":""}><summary>${RGL[g]?`<span class="rgl">${gImg(RGL[g])}</span>`:""}<span class="rgn">${esc(g)}</span><span class="rgc">${R.length}${lt?` · <b style="color:var(--urg)">${lt} egiteko</b>`:""}</span>${RG_FOLD.includes(g)?`<button class="btn sm" data-rgf="${esc(g)}">📁 ${(RGF[g]||[]).length}</button>`:""}<button class="btn sm" data-rga="${esc(g)}">+</button></summary><div class="list">${R.map(revRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")})()}`:
  `<div class="empty"><p>Oraindik ez dago errebisiorik.<br>Gehitu aldian behin egin behar dituzun errebisioak (su-itzalgailuak, galdara…), eta app-ak esango dizu noiz dagokien hurrengoa.</p><p class="note">Ideia batzuk, sakatu gehitzeko:</p><div class="filters" style="justify-content:center">${SUG.map((x,i)=>`<button class="chip" data-sug="${i}">+ ${x[0]} · ${freqTxt({n:x[1],u:x[2]})}</button>`).join("")}</div></div>`}</div>`;
  $("rN").onclick=()=>editRev();
  V.querySelectorAll("details[data-rg]").forEach(d=>d.ontoggle=()=>{d.open?RGO.add(d.dataset.rg):RGO.delete(d.dataset.rg)});
@@ -1039,7 +1067,7 @@ function start(){const err=e=>{if(e&&e.code==="permission-denied")denied(FBU);el
  DB=FB;spaces=[];ALL=[];events=[];revs=[];docs=[];staff=[];render();
  const on=(c,f)=>SUBS.push(FB.collection(c).onSnapshot(f,err));
  on("spaces",s=>{spaces=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();imp(s)});
- on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};if(Array.isArray(z))ZU=z;render()});
+ on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();if(Array.isArray(z))ZU=z;render()});
  on("staff",s=>{staff=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("docs",s=>{docs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();if(!$("ov").hidden&&window._docRefresh)window._docRefresh()});
  on("revs",s=>{revs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
