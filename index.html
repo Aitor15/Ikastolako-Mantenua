@@ -769,10 +769,14 @@ function gFolder(g){const FL=(RGF[g]||[]).slice().sort((a,b)=>(b.at||"").localeC
   for(const f of fs){if(f.size>15*1024*1024){toast(f.name+": handiegia");continue}$("gfUs").textContent="Igotzen: "+f.name+"…";const ty=f.type||(/\.pdf$/i.test(f.name)?"application/pdf":"");
    try{const u=await AS.upload(f,ty?{type:ty}:undefined);L.push({id:u.id,name:f.name,type:u.contentType||ty,size:u.sizeBytes||f.size,at:today})}catch(e){toast(f.name+": ezin izan da igo")}}
   save(L)}}
+async function orphanFiles(){const used=new Set();const add=f=>{if(f&&f.id)used.add(f.id)};
+ revs.forEach(r=>{(r.files||[]).forEach(add);(r.log||[]).forEach(e=>add(e.pdf))});docs.forEach(d=>(d.files||[]).forEach(add));events.forEach(e=>(e.files||[]).forEach(add));
+ Object.values(RGL||{}).forEach(id=>used.add(id));Object.values(RGF||{}).forEach(L=>(L||[]).forEach(add));
+ const s=await FB.collection("files").get();return s.docs.filter(d=>!used.has(d.id)).map(d=>({id:d.id,...d.data()}))}
 function pxFolder(r){if(!r)return;const T=protoOf(r)||{file:"Dokumentua"};const L=revLog(r).filter(e=>e.form),FL=(r.files||[]).slice().sort((a,b)=>(b.at||"").localeCompare(a.at||""));
  sheet(`<h3>📁 ${esc(r.name)}</h3><div class="note">${protoOf(r)?`Betetako protokoloak (${L.length})${FL.length?` · inportatuak (${FL.length})`:""}`:`Fitxategiak (${FL.length})`}</div>
  <div class="fl">${L.length?L.map(e=>`<div class="fi pfi"><span class="fic">PDF</span><a href="#" data-fo="${esc(e.k)}">${esc(e.pdf?e.pdf.name:`${T.file}_${e.d}.pdf`)}<small>${fmtY(e.d)} · ${esc(e.n||"")}</small></a><button class="btn sm" data-fd="${esc(e.k)}">⬇︎</button><button class="btn sm" data-fe="${esc(e.k)}">📋</button><button class="btn sm" data-fx="${esc(e.k)}">✕</button></div>`).join(""):""}${FL.map((f,i)=>`<div class="fi pfi"><span class="fic">${/pdf/.test(f.type)?"PDF":"📄"}</span><a href="#" data-io="${i}">${esc(f.name)}<small>${f.at?fmtY(f.at)+" · ":""}inportatua</small></a><button class="btn sm" data-id="${i}">⬇︎</button><button class="btn sm" data-ix="${i}">✕</button></div>`).join("")}${!L.length&&!FL.length?`<div class="note">Oraindik ez dago ezer.</div>`:""}</div>
- ${AS?`<label class="btn sm up" for="pfU" style="align-self:flex-start">⬆︎ PDF inportatu</label><input type="file" id="pfU" accept="application/pdf,image/*" multiple hidden><span class="note" id="pfUs"></span>`:""}
+ ${AS?`<button class="btn sm" id="pfL" style="align-self:flex-start">🔎 Galdutako fitxategiak bilatu</button>`:""}${AS?`<label class="btn sm up" for="pfU" style="align-self:flex-start">⬆︎ PDF inportatu</label><input type="file" id="pfU" accept="application/pdf,image/*" multiple hidden><span class="note" id="pfUs"></span>`:""}
  <div class="acts"><span class="grow"></span><button class="btn" id="pfX">Itxi</button>${protoOf(r)?`<button class="btn pri" id="pfN">📋 Berria bete</button>`:""}</div>`);
  const get=async e=>e.pdf?await fileBlob(e.pdf):await protoPdf(T,e.form),nm=e=>e.pdf?e.pdf.name:`${T.file}_${e.d}.pdf`,F=k=>L.find(e=>e.k===k);
  $("pfX").onclick=close;if($("pfN"))$("pfN").onclick=()=>openProto(r);
@@ -782,6 +786,12 @@ function pxFolder(r){if(!r)return;const T=protoOf(r)||{file:"Dokumentua"};const 
  S.querySelectorAll("[data-io]").forEach(a=>a.onclick=ev=>{ev.preventDefault();openFile(FL[+a.dataset.io])});
  S.querySelectorAll("[data-id]").forEach(b=>b.onclick=async()=>{const f=FL[+b.dataset.id];b.textContent="…";try{if(!DL)throw 0;await DL.save({filename:f.name,data:await fileBlob(f)})}catch(x){if(!(x&&x.code==="declined"))toast("Ezin izan da deskargatu")}b.textContent="⬇︎"});
  S.querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>{if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur?";return}const f=FL[+b.dataset.ix];if(AS)AS.delete(f.id).catch(()=>{});const x=cl(revs.find(y=>y.id===r.id)||r);x.files=(x.files||[]).filter(y=>y.id!==f.id);saveR(x)});
+ const lb=$("pfL");if(lb)lb.onclick=async()=>{lb.textContent="Bilatzen…";try{const O=await orphanFiles();if(!O.length){lb.textContent="Ez dago galdutako fitxategirik";return}
+  sheet(`<h3>Galdutako fitxategiak</h3><div class="note">Inon ez dauden fitxategiak (${O.length}). Aukeratu ${esc(r.name)} karpetan sartzeko.</div><div class="fl">${O.map((f,i)=>`<div class="fi pfi"><span class="fic">${/pdf/.test(f.type)?"PDF":"📄"}</span><a href="#" data-oo="${i}">${esc(f.name||"fitxategia")}<small>${f.size?Math.round(f.size/1024)+" KB":""}</small></a><button class="btn sm pri" data-oa="${i}">+ Karpetara</button></div>`).join("")}</div><div class="acts"><span class="grow"></span><button class="btn" id="oB">Atzera</button></div>`);
+  const S2=$("sheet");$("oB").onclick=()=>pxFolder(revs.find(y=>y.id===r.id)||r);
+  S2.querySelectorAll("[data-oo]").forEach(a=>a.onclick=ev=>{ev.preventDefault();openFile(O[+a.dataset.oo])});
+  S2.querySelectorAll("[data-oa]").forEach(b=>b.onclick=()=>{const f=O[+b.dataset.oa];const x=cl(revs.find(y=>y.id===r.id)||r);x.files=[...(x.files||[]),{id:f.id,name:f.name||"fitxategia.pdf",type:f.type||"application/pdf",size:f.size||0,at:today}];const i=revs.findIndex(y=>y.id===x.id);if(i>=0)revs[i]=x;put("revs",x);b.textContent="✓";b.disabled=true})}
+  catch(e){lb.textContent="Ezin izan da bilatu"}};
  const up=$("pfU");if(up)up.onchange=async()=>{const fs=[...up.files];up.value="";if(!fs.length)return;let x=cl(revs.find(y=>y.id===r.id)||r);x.files=x.files||[];
   for(const f of fs){if(f.size>15*1024*1024){toast(f.name+": handiegia");continue}$("pfUs").textContent="Igotzen: "+f.name+"…";const ty=f.type||(/\.pdf$/i.test(f.name)?"application/pdf":"");
    try{const u=await AS.upload(f,ty?{type:ty}:undefined);x.files.push({id:u.id,name:f.name,type:u.contentType||ty,size:u.sizeBytes||f.size,at:today})}catch(e){toast(f.name+": ezin izan da igo")}}
