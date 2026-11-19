@@ -298,6 +298,9 @@ body.dragging{overflow:hidden}
 .dsub{padding:0 10px 10px;display:flex;flex-direction:column;gap:8px}.rg.rs{margin-top:0;background:var(--bg)}.rg>.list>.rg.rs{margin:6px 0}.rg.rs .rgn{font-size:15px;color:var(--ink)}.rg.rs>summary{padding:9px 12px}
 .rg.rgm>summary .rgn{font-size:19px}.rg.rc{margin-top:0;background:var(--bg)}.rg.rc>summary{flex-wrap:wrap;row-gap:2px}.rg.rc>summary .rgn{flex:1 1 0;min-width:0}.rg.rc>summary .rgc{order:5;flex-basis:100%;padding-left:20px}.rg.rc .rgn{font-size:16px}.rg.rc .dsub .rg.rs{background:var(--surface)}
 .rgd{color:var(--acc);font-weight:700}
+.zone .grid{display:flex;flex-direction:column;gap:6px}.zone .room{flex-direction:row;align-items:center;min-height:0;padding:11px 12px;gap:10px}.zone .room h3{font-size:16px;flex:1;min-width:0;padding-right:0}.zone .room .tut{max-width:40%;flex:none}.zone .room .meta{white-space:nowrap;flex:none}.zone .room .dot{position:static;order:-1;flex:none}.zone .room:not(.addroom){background:#22324b;border-color:#34496a}.zone .room.has-urg{border-color:var(--urg)}.zone .room.addroom{justify-content:center;color:var(--mute)}
+@keyframes drop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:no-preference){.anim{animation:drop .28s ease-out both}.grid.anim{animation:none}.grid.anim>*{animation:drop .3s ease-out both}.grid.anim>*:nth-child(2){animation-delay:.03s}.grid.anim>*:nth-child(3){animation-delay:.06s}.grid.anim>*:nth-child(4){animation-delay:.09s}.grid.anim>*:nth-child(5){animation-delay:.12s}.grid.anim>*:nth-child(6){animation-delay:.15s}.grid.anim>*:nth-child(n+7){animation-delay:.18s}}
+.tgl{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tgc{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface)}.tgc input{margin:0;accent-color:var(--acc)}.tgc:has(input:checked){border-color:var(--acc);background:rgba(255,182,39,.12)}
 </style>
 
 <div class="wrap">
@@ -350,7 +353,7 @@ const late=t=>open(t)&&t.due&&t.due<today;
 const HIL3=["urt.","ots.","mar.","api.","mai.","eka.","uzt.","abu.","ira.","urr.","aza.","abe."];
 const fmtD=d=>{if(!d)return"";const x=new Date(d+"T00:00");return HIL3[x.getMonth()]+" "+x.getDate()};
 const sortT=a=>a.sort((x,y)=>(open(y)-open(x))||(PO[x.prio]-PO[y.prio])||((x.due||"9")>(y.due||"9")?1:-1)||(x.ot-y.ot));
-let OZ=LS("mnt_open",[]);
+let ZJ=null;let OZ=[].concat(LS("mnt_open",[])).slice(0,1);
 const ZO=["HH","LH","DBH","Irakasle gelak","Idazkaritza","Komunak","Besteak","Kanpoa"];
 let ZU=LS("mnt_zord",null);
 const byOrd=(a,b)=>((a.ord??1e9)-(b.ord??1e9))||a.name.localeCompare(b.name,"es",{numeric:true});
@@ -367,7 +370,7 @@ function yearSel(){const NY=(()=>{const a=+CY.slice(0,4)+1;return a+"-"+String((
 function avisos(){const A=$("avis");if(!A)return;const t=new Date(today+"T00:00");t.setDate(t.getDate()+1);const tm=iso(t);
  const L=events.filter(e=>e.type==="bilera"&&(e.date===today||e.date===tm)).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
  A.hidden=!L.length;A.innerHTML=L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
- A.querySelectorAll("[data-avd]").forEach(b=>b.onclick=()=>{view="cal";CD=b.dataset.avd;CM=CD.slice(0,7);render();scrollTo(0,0)})}
+ A.querySelectorAll("[data-avd]").forEach(b=>b.onclick=()=>{view="cal";CD=b.dataset.avd;CM=CD.slice(0,7);render();animV();scrollTo(0,0)})}
 function render(){if(document.body.classList.contains("dragging"))return;tasks=ALL.filter(inYear);yearSel();avisos();
  $("mode").textContent=DB?"Hodeian gordeta · berdin ikusten da zure gailu guztietan":"Nabigatzaile honetan bakarrik gordeta";
  const op=tasks.filter(open),urg=op.filter(t=>t.prio==="alta"||late(t)),dn=tasks.filter(t=>t.status==="hecho");
@@ -388,12 +391,12 @@ function progCard(){const dn=tasks.filter(t=>!open(t)).length,op=tasks.filter(op
 function drawRooms(V){
  if(!spaces.length){V.innerHTML=`<div class="empty"><p>Oraindik ez dago espaziorik.<br>Gehitu gelak, komunak, kiroldegia, patioa… lanak idazten hasteko.</p><button class="btn pri" id="eAdd">+ Espazioa gehitu</button></div>`;$("eAdd").onclick=()=>editSpace();return}
  V.innerHTML=progCard()+zones().map(z=>{const zs=spaces.filter(s=>(s.zone||"Solairurik gabe")===z),zp=tasks.filter(t=>open(t)&&zs.some(s=>s.id===t.space)),zd=tasks.filter(t=>!open(t)&&zs.some(s=>s.id===t.space)).length,zu=zp.some(t=>t.prio==="alta"||late(t)),o=OZ.includes(z);
-  return `<section class="zone"><button class="zh${o?" open":""}" data-tg="${esc(z)}" aria-expanded="${o}"><span class="zn">${esc(z)}</span><span class="zc">${zs.length} gela · <b class="zdn">${zd}</b> eginda</span><span class="zb ${zp.length?(zu?"zr":"zy"):"zk"}">${zp.length} egiteko</span><span class="zv" aria-hidden="true">›</span></button><div class="grid"${o?"":" hidden"}>${spaces.filter(s=>(s.zone||"Solairurik gabe")===z).sort(byOrd).map(s=>{
+  return `<section class="zone"><button class="zh${o?" open":""}" data-tg="${esc(z)}" aria-expanded="${o}"><span class="zn">${esc(z)}</span><span class="zc">${zs.length} gela · <b class="zdn">${zd}</b> eginda</span><span class="zb ${zp.length?(zu?"zr":"zy"):"zk"}">${zp.length} egiteko</span><span class="zv" aria-hidden="true">›</span></button><div class="grid${o&&z===ZJ?" anim":""}"${o?"":" hidden"}>${spaces.filter(s=>(s.zone||"Solairurik gabe")===z).sort(byOrd).map(s=>{
   const ts=tasks.filter(t=>t.space===s.id&&open(t)),u=ts.some(t=>t.prio==="alta"||late(t));
   return `<div class="room${u?" has-urg":""}${ts.length?"":" clear"}${s.phone?"":""}" data-r="${esc(s.id)}" role="button" tabindex="0">${u?'<span class="dot" aria-label="Premiazkoak ditu"></span>':""}<h3>${esc(s.name)}</h3>${tutName(s)&&hasTutor(s.zone,s.name)?`<span class="tut">${esc(tutName(s))}</span>`:""}<span class="meta">${ts.length?ts.length+" egiteko":"✓ Egunean"}</span></div>`}).join("")}<button class="room addroom" data-z="${esc(z)}">+ Gehitu ${esc(z)} taldean</button></div></section>`}).join("");
- V.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{const z=b.dataset.tg;OZ=OZ.includes(z)?OZ.filter(x=>x!==z):[...OZ,z];LSset("mnt_open",OZ);render()});
+ V.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{const z=b.dataset.tg;OZ=OZ.includes(z)?[]:[z];ZJ=OZ[0]||null;LSset("mnt_open",OZ);render();ZJ=null});
  V.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>editSpace(null,b.dataset.z));
- V.querySelectorAll("[data-r]").forEach(b=>{b.onclick=e=>{if(e.target.closest(".rcall"))return;room=b.dataset.r;render();scrollTo(0,0)};b.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();b.click()}}});{const ea=$("eAdd");if(ea)ea.onclick=()=>editSpace()}}
+ V.querySelectorAll("[data-r]").forEach(b=>{b.onclick=e=>{if(e.target.closest(".rcall"))return;room=b.dataset.r;render();animV();scrollTo(0,0)};b.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();b.click()}}});{const ea=$("eAdd");if(ea)ea.onclick=()=>editSpace()}}
 function taskRow(t,showSpace){const s=sp(t.space);
  return `<div class="task p-${t.prio}${open(t)?"":" done"}"><button class="chk" data-c="${esc(t.id)}" aria-label="${open(t)?"Eginda markatu":"Berriz ireki"}">${open(t)?"":"✓"}</button>
  <div class="tb" data-e="${esc(t.id)}"><div class="tt">${esc(t.title)}</div><div class="ts"><span class="ot">OT-${String(t.ot).padStart(4,"0")}</span>${SY!=="all"&&yr(t.created)!==SY?`<span class="late">${yr(t.created)} ikasturtekoa</span>`:""}${showSpace&&s?`<span>${esc(s.name)}</span>`:""}${t.due?`<span class="${late(t)?"late":""}">${late(t)?"Epez kanpo · ":"Epea: "}${fmtD(t.due)}</span>`:""}${t.status==="hecho"&&t.doneAt?`<span>Eginda ${fmtD(t.doneAt)}</span>`:""}</div></div>
@@ -424,29 +427,53 @@ function staffRow(c){const g=gelakOf(c.id);
  return `<div class="task st"><div class="tb" data-se="${esc(c.id)}"><div class="tt">${esc(c.name)}</div><div class="ts">${c.role?`<span>${esc(c.role)}</span>`:""}${c.phone?`<span class="tph">${esc(c.phone)}</span>`:""}</div>
  ${g.length?`<div class="gch">${g.map(x=>`<span class="gc">${esc(x.name)}</span>`).join("")}</div>`:""}</div>
  <div class="sxs"><button class="sx se" data-sed="${esc(c.id)}" aria-label="Editatu ${esc(c.name)}">✎</button><button class="sx" data-sx="${esc(c.id)}" aria-label="Ezabatu ${esc(c.name)}">✕</button></div></div>`}
-function drawStaff(V){const q=sq.trim().toLowerCase(),L=staff.filter(c=>!q||c.name.toLowerCase().includes(q)||(c.role||"").toLowerCase().includes(q)||gelakOf(c.id).some(x=>x.name.toLowerCase().includes(q))).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+const STG0=["Irakasleak","Mantenu arduraduna","Sukaldari burua","Sukaldari laguntzailea","Jangelako arduraduna","Idazkaria","Idazkari orokorra","Administraria","Administrari orokorra","Zuzendari orokorra","DBH zuzendaria","LH zuzendaria","DBH orientatzailea","LH orientatzailea","HH orientatzailea"];
+let STG=STG0.slice();const SGO=new Set(),NOGRP="Talde gabe";
+const saveSTG=()=>{if(DB)DB.collection("config").doc("staffgroups").set({list:STG}).catch(()=>toast("Ezin izan da gorde"))};
+const SGREN={"Sukaldari orokorra":"Sukaldari burua"},sgRen=x=>SGREN[x]||x;
+const grpsOf=c=>[...new Set([].concat(c.grps||(c.grp?[c.grp]:[])).map(sgRen))].filter(x=>STG.includes(x));
+const inGrp=(c,g)=>{const G=grpsOf(c);return g===NOGRP?!G.length:G.includes(g)};
+const byNm=(a,b)=>a.name.localeCompare(b.name,"es");const stgSorted=()=>STG.slice().sort((a,b)=>a.localeCompare(b,"es"));
+function staffMatch(c){const q=sq.trim().toLowerCase();return !q||c.name.toLowerCase().includes(q)||grpsOf(c).some(x=>x.toLowerCase().includes(q))||(c.role||"").toLowerCase().includes(q)||gelakOf(c.id).some(x=>x.name.toLowerCase().includes(q))}
+function staffBody(){const q=sq.trim();if(!staff.length)return `<div class="empty">Oraindik ez dago langilerik.<br>Sakatu “+ Langilea” lehena gehitzeko.</div>`;
+ if(q){const L=staff.filter(staffMatch).sort(byNm);return L.length?L.map(staffRow).join(""):`<div class="empty">Ez da inor aurkitu.</div>`}
+ const G=[...stgSorted(),...(staff.some(c=>!grpsOf(c).length)?[NOGRP]:[])];
+ return G.map(g=>{const L=staff.filter(c=>inGrp(c,g)).sort(byNm),own=!STG0.includes(g)&&g!==NOGRP;
+  return `<details class="rg" data-sg="${esc(g)}"${SGO.has(g)?' open data-anim="0"':""}><summary><span class="rgn">${esc(g)}</span><span class="rgc">${L.length?L.length:""}</span>${own?`<button class="btn sm" data-sgx="${esc(g)}" aria-label="Taldea ezabatu">✕</button>`:""}<button class="btn sm" data-sga="${esc(g===NOGRP?"":g)}" aria-label="Langilea gehitu">+</button></summary><div class="list">${L.length?L.map(staffRow).join(""):`<div class="note" style="padding:4px 2px">Oraindik ez dago inor talde honetan.</div>`}</div></details>`}).join("")}
+function drawStaff(V){
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Langileak</h2></div>
- <div class="acts"><button class="btn sm pri" id="sfN">+ Langilea</button></div>
- ${staff.length?`<input class="srch" id="sfQ" placeholder="Bilatu izenez, karguz edo gelaz…" value="${esc(sq)}" autocomplete="off"><div class="note">${staff.length} langile · ${spaces.filter(x=>tutOf(x)).length} gelak dute tutorea</div>`:""}
- <div class="list" id="sfL">${L.length?L.map(staffRow).join(""):staff.length?`<div class="empty">Ez da inor aurkitu.</div>`:`<div class="empty">Oraindik ez dago langilerik.<br>Sakatu “+ Langilea” lehena gehitzeko.</div>`}</div></div>`;
- $("sfN").onclick=()=>editStaff();
- const qi=$("sfQ");if(qi)qi.oninput=()=>{sq=qi.value;const L2=staff.filter(c=>{const q=sq.trim().toLowerCase();return !q||c.name.toLowerCase().includes(q)||(c.role||"").toLowerCase().includes(q)||gelakOf(c.id).some(x=>x.name.toLowerCase().includes(q))}).sort((a,b)=>a.name.localeCompare(b.name,"es"));$("sfL").innerHTML=L2.length?L2.map(staffRow).join(""):`<div class="empty">Ez da inor aurkitu.</div>`;bindStaff(V)};
+ <div class="acts"><button class="btn sm pri" id="sfN">+ Langilea</button><button class="btn sm" id="sfT">+ Taldea</button></div>
+ ${staff.length?`<input class="srch" id="sfQ" placeholder="Bilatu izenez, taldez edo gelaz…" value="${esc(sq)}" autocomplete="off"><div class="note">${staff.length} langile · ${spaces.filter(x=>tutOf(x)).length} gelak dute tutorea</div>`:""}
+ <div class="list" id="sfL">${staffBody()}</div></div>`;
+ $("sfN").onclick=()=>editStaff();$("sfT").onclick=newStaffGroup;
+ const qi=$("sfQ");if(qi)qi.oninput=()=>{sq=qi.value;$("sfL").innerHTML=staffBody();bindStaff(V)};
  bindStaff(V)}
-function bindStaff(V){V.querySelectorAll("[data-sed]").forEach(b=>b.onclick=e=>{e.stopPropagation();editStaff(staff.find(x=>x.id===b.dataset.sed));setTimeout(()=>{const i=$("pN");if(i){i.focus();i.select()}},60)});
+function newStaffGroup(cb){sheet(`<h3>Talde berria</h3><label class="f">Taldearen izena<input id="tgN" autocomplete="off"></label><div class="acts"><span class="grow"></span><button class="btn" id="tgC">Utzi</button><button class="btn pri" id="tgG">Sortu</button></div>`);
+ setTimeout(()=>$("tgN").focus(),0);$("tgC").onclick=close;
+ $("tgG").onclick=()=>{const v=$("tgN").value.trim().replace(/\s+/g," ");if(!v){$("tgN").focus();return}const ex=STG.find(x=>x.toLowerCase()===v.toLowerCase());
+  if(!ex){STG=[...STG,v];saveSTG()}close();if(typeof cb==="function")cb(ex||v);else{SGO.clear();SGO.add(ex||v);render()}};
+ $("tgN").onkeydown=e=>{if(e.key==="Enter")$("tgG").click()}}
+function bindStaff(V){V.querySelectorAll("details[data-sg]").forEach(d=>d.ontoggle=()=>accTog(d,SGO,d.dataset.sg));
+ V.querySelectorAll("[data-sga]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();editStaff(null,b.dataset.sga)});
+ V.querySelectorAll("[data-sgx]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ezabatu?";return}const g=b.dataset.sgx;STG=STG.filter(x=>x!==g);saveSTG();SGO.delete(g);staff.filter(c=>grpsOf(c).includes(g)||c.grp===g).forEach(c=>{const y=cl(c);y.grps=grpsOf(c).filter(x=>x!==g);y.grp="";const i=staff.findIndex(x=>x.id===c.id);staff[i]=y;put("staff",y)});render()});
+ V.querySelectorAll("[data-sed]").forEach(b=>b.onclick=e=>{e.stopPropagation();editStaff(staff.find(x=>x.id===b.dataset.sed));setTimeout(()=>{const i=$("pN");if(i){i.focus();i.select()}},60)});
  V.querySelectorAll("[data-sx]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(b.dataset.a!=="1"){b.dataset.a="1";b.classList.add("sure");b.textContent="Ezabatu?";setTimeout(()=>{if(b.isConnected){b.dataset.a="";b.classList.remove("sure");b.textContent="✕"}},4000);return}
   const c=staff.find(x=>x.id===b.dataset.sx);if(!c)return;gelakOf(c.id).forEach(sp=>saveSpace(setTut(sp,null)));staff=staff.filter(y=>y.id!==c.id);del("staff",c.id);toast(c.name+" ezabatuta")})}
 async function importStaff(f){const list=parseVcf(await f.text());let n=0;
  list.forEach(c=>{const nm=c.n.replace(/\bikastola\b/ig,"").replace(/\s+/g," ").trim();if(!nm||staff.some(x=>x.name.toLowerCase()===nm.toLowerCase()))return;const o={id:uid("p"),name:nm,phone:"",role:""};staff.push(o);put("staff",o);n++});
  toast(n?`${n} langile inportatuta`:list.length?"Guztiak zeuden jada":"Ez da kontakturik aurkitu fitxategian");render()}
 function syncTutor(c){spaces.filter(x=>x.tutorId===c.id).forEach(x=>{if(x.tutor!==c.name||x.phone!==c.phone){const y=cl(x);y.tutor=c.name;y.phone=c.phone;saveSpace(y)}})}
-function editStaff(c){const n=!c;c=c?cl(c):{id:uid("p"),name:"",phone:"",role:""};const g=gelakOf(c.id);
+function editStaff(c,g0){const n=!c;c=c?cl(c):{id:uid("p"),name:"",phone:"",role:"",grps:g0?[g0]:[]};const cg=grpsOf(c);const g=gelakOf(c.id);
  sheet(`<h3>${n?"Langile berria":esc(c.name)}</h3>
  <label class="f">Izena eta abizena<input id="pN" value="${esc(c.name)}" autocomplete="name"></label>
+ <div class="f"><span>Taldeak <small style="color:var(--mute);font-weight:400">(bat edo gehiago)</small></span><div class="tgl" id="pTg">${stgSorted().map(x=>`<label class="tgc"><input type="checkbox" value="${esc(x)}"${cg.includes(x)?" checked":""}><span>${esc(x)}</span></label>`).join("")}</div><button type="button" class="btn sm" id="pTn" style="align-self:flex-start;margin-top:6px">+ Talde berria</button></div>
  <label class="f">Gela<select id="pGl"><option value="">— Gelarik gabe —</option>${TZ.map(z=>{const R=spaces.filter(s=>s.zone===z&&hasTutor(s.zone,s.name)).sort(byOrd);return R.length?`<optgroup label="${z}">${R.map(s=>{const t=tutOf(s),mine=t&&t.id===c.id;return `<option value="${esc(s.id)}"${mine&&g[0]&&g[0].id===s.id?" selected":""}>${esc(s.name)}${t&&!mine?" · "+esc(tutName(s)):""}</option>`}).join("")}</optgroup>`:""}).join("")}</select></label>
  <div class="acts"><span class="grow"></span><button class="btn" id="pC">Utzi</button><button class="btn pri" id="pG">Gorde</button></div>`);
  if(n)setTimeout(()=>$("pN").focus(),0);
  $("pC").onclick=close;
- $("pG").onclick=()=>{const v=$("pN").value.trim();if(!v){$("pN").focus();return}c.name=v;
+ const chk=()=>[...$("pTg").querySelectorAll("input:checked")].map(i=>i.value);
+ $("pTn").onclick=()=>{const nm=$("pN").value,gl=$("pGl").value,cur=chk();newStaffGroup(ng=>{c.name=nm;c.grps=[...new Set([...cur,ng])];c.grp="";editStaff(c);setTimeout(()=>{$("pGl").value=gl},0)})};
+ $("pG").onclick=()=>{const v=$("pN").value.trim();if(!v){$("pN").focus();return}c.name=v;c.grps=chk();c.grp="";
   const i=staff.findIndex(x=>x.id===c.id);if(i>=0)staff[i]=c;else staff.push(c);put("staff",c);syncTutor(c);
   const sel=$("pGl").value;spaces.filter(s=>hasTutor(s.zone,s.name)).forEach(s=>{const t=tutOf(s),on=s.id===sel;
    if(on&&(!t||t.id!==c.id||t.name!==c.name))saveSpace(setTut(s,c));else if(!on&&t&&t.id===c.id)saveSpace(setTut(s,null))});close();render()};
@@ -471,7 +498,7 @@ function drawRoom(V,s){const ts=sortT(tasks.filter(t=>t.space===s.id));
  ${tutorCard(s)}
  <form class="quick" id="qf"><input id="qt" placeholder="Lan berria ${esc(s.name)} gelan… (adib.: fluoreszentea aldatu)" autocomplete="off" aria-label="Lan berria"><select id="qp" aria-label="Lehentasuna"><option value="media">Arrunta</option><option value="alta">Premiazkoa</option><option value="baja">Ahal denean</option></select><button class="btn pri">Gehitu</button></form>
  <div class="list">${ts.length?ts.map(t=>taskRow(t,false)).join(""):`<div class="empty">Ez dago lanik espazio honetan. Idatzi goian lehena.</div>`}</div></div>`;
- $("back").onclick=()=>{room=null;render()};$("eSp").onclick=()=>editSpace(s);
+ $("back").onclick=()=>{room=null;render();animV()};$("eSp").onclick=()=>editSpace(s);
 
  const tsl=$("tsel");if(tsl)tsl.onchange=()=>{const c=staff.find(x=>x.id===tsl.value);saveSpace(setTut(s,c));toast(c?`${s.name}: ${c.name}`:`${s.name}: tutorerik gabe`)};
  $("qf").onsubmit=e=>{e.preventDefault();const v=$("qt").value.trim();if(!v)return;saveTask({id:uid("t"),ot:nextOT(),space:s.id,title:v,prio:$("qp").value,status:"pend",due:"",notes:"",created:newCreated(),doneAt:""});setTimeout(()=>{const q=$("qt");if(q)q.focus()},0)};
@@ -522,13 +549,13 @@ function drawDocs(V){const all=docsInYear(),L=all.filter(d=>dfilt==="all"||d.kin
  <div class="filters">${[["all","Guztiak"],["aurre","Aurrekontuak"],["fakt","Fakturak"]].map(([k,v])=>`<button class="chip${dfilt===k?" on":""}" data-df="${k}">${v} · ${k==="all"?all.length:all.filter(d=>d.kind===k).length}</button>`).join("")}</div>
  ${L.length||DCO.length?(()=>{const G={};DCO.forEach(n=>{const k=n.trim().toUpperCase();if(k)G[k]=G[k]||{name:n.trim(),l:[]}});L.forEach(d=>{const p=(d.provider||"").trim(),k=p.toUpperCase()||"~";(G[k]=G[k]||{name:p||"Besteak",l:[]}).l.push(d)});
   const comp=k=>{const g=G[k],f=g.l.filter(d=>d.kind==="fakt"),sum=f.reduce((a,d)=>a+(+d.amount||0),0),zp=g.l.filter(d=>d.status==="ordaintzeko").length;
-   return `<details class="rg rc" data-dg="${esc(k)}"${DGO.has(k)?" open":""}><summary><span class="rgn">${esc(g.name)}</span><span class="rgc">${g.l.length}${sum?` · ${sum.toLocaleString("eu-ES",{maximumFractionDigits:2})} €`:""}${zp?` · <b style="color:var(--urg)">${zp} ordaintzeko</b>`:""}</span>${k!=="~"?`<button class="btn sm" data-dge="${esc(g.name)}">✎</button><button class="btn sm" data-dgx="${esc(g.name)}">✕</button>`:""}<button class="btn sm" data-dga="${esc(k==="~"?"":g.name)}">+</button></summary><div class="dsub">${[["aurre","Aurrekontuak"],["fakt","Fakturak"]].map(([kd,lb])=>{const s=g.l.filter(d=>d.kind===kd),sk=k+"|"+kd;return `<details class="rg rs" data-dg="${esc(sk)}"${DGO.has(sk)?" open":""}><summary><span class="rgn">${lb}</span><span class="rgc">${s.length}</span><button class="btn sm" data-dga="${esc(k==="~"?"":g.name)}" data-dgk="${kd}">+</button></summary><div class="list">${s.map(docRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")}</div></details>`};
+   return `<details class="rg rc" data-dg="${esc(k)}"${DGO.has(k)?" open data-anim=\"0\"":""}><summary><span class="rgn">${esc(g.name)}</span><span class="rgc">${g.l.length}${sum?` · ${sum.toLocaleString("eu-ES",{maximumFractionDigits:2})} €`:""}${zp?` · <b style="color:var(--urg)">${zp} ordaintzeko</b>`:""}</span>${k!=="~"?`<button class="btn sm" data-dge="${esc(g.name)}">✎</button><button class="btn sm" data-dgx="${esc(g.name)}">✕</button>`:""}<button class="btn sm" data-dga="${esc(k==="~"?"":g.name)}">+</button></summary><div class="dsub">${[["aurre","Aurrekontuak"],["fakt","Fakturak"]].map(([kd,lb])=>{const s=g.l.filter(d=>d.kind===kd),sk=k+"|"+kd;return `<details class="rg rs" data-dg="${esc(sk)}"${DGO.has(sk)?" open data-anim=\"0\"":""}><summary><span class="rgn">${lb}</span><span class="rgc">${s.length}</span><button class="btn sm" data-dga="${esc(k==="~"?"":g.name)}" data-dgk="${kd}">+</button></summary><div class="list">${s.map(docRow).join("")||`<div class="note">Hutsik</div>`}</div></details>`}).join("")}</div></details>`};
   const GG={};Object.keys(G).forEach(k=>{const gr=k==="~"?"BESTEAK":gremOf(k);(GG[gr]=GG[gr]||[]).push(k)});
   return [...GREM,"BESTEAK"].filter(gr=>gr!=="BESTEAK"||GG.BESTEAK).map(gr=>{const ks=(GG[gr]||[]).sort((a,b)=>(a==="~")-(b==="~")||a.localeCompare(b)),n=ks.reduce((s,k)=>s+G[k].l.length,0),zp=ks.reduce((s,k)=>s+G[k].l.filter(d=>d.status==="ordaintzeko").length,0),gk="G:"+gr;
-   return `<details class="rg rgm" data-dg="${esc(gk)}"${DGO.has(gk)?" open":""}><summary><span class="rgn">${gr}</span><span class="rgc">${n}${zp?` · <b style="color:var(--urg)">${zp} ordaintzeko</b>`:""}</span>${gr!=="BESTEAK"?`<button class="btn sm" data-grx="${esc(gr)}">✕</button><button class="btn sm" data-dgn="${esc(gr)}">+</button>`:""}</summary><div class="dsub">${ks.map(comp).join("")||`<div class="note">Enpresarik ez</div>`}</div></details>`}).join("")})():`<div class="empty">Ez dago ezer hemen.<br>Sakatu “+ Aurrekontua” edo “+ Faktura” lehena gordetzeko: datuak idatzi eta PDFa edo argazkia erantsi.</div>`}</div>`;
+   return `<details class="rg rgm" data-dg="${esc(gk)}"${DGO.has(gk)?" open data-anim=\"0\"":""}><summary><span class="rgn">${gr}</span><span class="rgc">${n}${zp?` · <b style="color:var(--urg)">${zp} ordaintzeko</b>`:""}</span>${gr!=="BESTEAK"?`<button class="btn sm" data-grx="${esc(gr)}">✕</button><button class="btn sm" data-dgn="${esc(gr)}">+</button>`:""}</summary><div class="dsub">${ks.map(comp).join("")||`<div class="note">Enpresarik ez</div>`}</div></details>`}).join("")})():`<div class="empty">Ez dago ezer hemen.<br>Sakatu “+ Aurrekontua” edo “+ Faktura” lehena gordetzeko: datuak idatzi eta PDFa edo argazkia erantsi.</div>`}</div>`;
  $("dA").onclick=()=>editDoc(null,{kind:"aurre"});$("dF").onclick=()=>editDoc(null,{kind:"fakt"});
  V.querySelectorAll("[data-df]").forEach(b=>b.onclick=()=>{dfilt=b.dataset.df;render()});
- V.querySelectorAll("details[data-dg]").forEach(d=>d.ontoggle=()=>{d.open?DGO.add(d.dataset.dg):DGO.delete(d.dataset.dg)});
+ V.querySelectorAll("details[data-dg]").forEach(d=>d.ontoggle=()=>accTog(d,DGO,d.dataset.dg));
  const saveCo=(L,GM)=>{DCO=L;if(GM)DCG=GM;if(DB)DB.collection("config").doc("companies").set({list:L,gremio:DCG,gremios:GREM}).catch(()=>toast("Ezin izan da gorde"));render()};
  const grSel=v=>`<label class="f">Gremioa<select id="coR">${GREM.map(g=>`<option${g===v?" selected":""}>${g}</option>`).join("")}</select></label>`;
  const newCo=gr=>{sheet(`<h3>Enpresa berria</h3><label class="f">Izena<input id="coN" placeholder="Adib.: Lehengoak" autocapitalize="characters"></label>${grSel(gr||GREM[0])}<div class="acts"><span class="grow"></span><button class="btn" id="coC">Utzi</button><button class="btn pri" id="coG">Gorde</button></div>`);setTimeout(()=>$("coN").focus(),0);$("coC").onclick=close;
@@ -825,10 +852,10 @@ const DET_PDF="JVBERi0xLjUNCiW1tbW1DQoxIDAgb2JqDQo8PC9UeXBlL0NhdGFsb2cvUGFnZXMgM
 function drawRev(V){const L=revs.slice().sort((a,b)=>nextRev(a).localeCompare(nextRev(b)));
  const late=L.filter(r=>daysTo(nextRev(r))<=0).length,soon=L.filter(r=>{const n=daysTo(nextRev(r));return n>0&&n<=30}).length;
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Berrikuspen periodikoak</h2><button class="btn sm pri" id="rN">+ Berrikuspen berria</button></div>
- ${L.length?`<div class="note">${late?`<b style="color:var(--urg)">${late} egiteko gaur edo epez kanpo</b> · `:""}${soon} hurrengo 30 egunetan · ${L.length} guztira</div>${(()=>{const G=revGroups(),U=L.filter(r=>!r.group);return (U.length?`<div class="list">${U.map(revRow).join("")}</div>`:"")+G.map(g=>{const R=L.filter(r=>r.group===g),lt=R.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg" data-rg="${esc(g)}"${RGO.has(g)?" open":""}><summary>${RGL[g]?`<span class="rgl">${gImg(RGL[g])}</span>`:""}<span class="rgn">${esc(g)}</span><span class="rgc">${lt?`<b style="color:var(--urg)">${lt} egiteko</b> · `:""}${(()=>{const per=y=>(+y.n||1)*({egun:1/30,aste:7/30,hil:1,urte:12}[y.u]||1);const C=R.filter(r=>!(r.sys&&R.some(y=>y.id!==r.id&&y.sys===r.sys&&per(y)<per(r))));if(!C.length)return"";const nx=C.map(nextRev).sort()[0];return `Hurrengo berrikuspena: <span class="rgd">${fmtY(nx)}</span>`})()}</span>${RG_FOLD.includes(g)?`<button class="btn sm" data-rgf="${esc(g)}">📁 ${(RGF[g]||[]).length}</button>`:""}<button class="btn sm" data-rga="${esc(g)}">+</button></summary><div class="list">${(()=>{const S=[...new Set(R.filter(r=>r.sys).map(r=>r.sys))];return R.filter(r=>!r.sys).map(revRow).join("")+S.map(s=>{const Rs=R.filter(r=>r.sys===s).sort((a,b)=>(a.n*(a.u==="urte"?12:1))-(b.n*(b.u==="urte"?12:1))),sk=g+"|"+s,l2=Rs.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg rs" data-rg="${esc(sk)}"${RGO.has(sk)?" open":""}><summary><span class="rgn">${esc(s)}</span><span class="rgc">${l2?`<b style="color:var(--urg)">${l2} egiteko</b>`:""}</span></summary><div class="list">${Rs.map(revRow).join("")}</div></details>`}).join("")||`<div class="note">Hutsik</div>`})()}</div></details>`}).join("")})()}`:
+ ${L.length?`<div class="note">${late?`<b style="color:var(--urg)">${late} egiteko gaur edo epez kanpo</b> · `:""}${soon} hurrengo 30 egunetan · ${L.length} guztira</div>${(()=>{const G=revGroups(),U=L.filter(r=>!r.group);return (U.length?`<div class="list">${U.map(revRow).join("")}</div>`:"")+G.map(g=>{const R=L.filter(r=>r.group===g),lt=R.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg" data-rg="${esc(g)}"${RGO.has(g)?" open data-anim=\"0\"":""}><summary>${RGL[g]?`<span class="rgl">${gImg(RGL[g])}</span>`:""}<span class="rgn">${esc(g)}</span><span class="rgc">${lt?`<b style="color:var(--urg)">${lt} egiteko</b> · `:""}${(()=>{const per=y=>(+y.n||1)*({egun:1/30,aste:7/30,hil:1,urte:12}[y.u]||1);const C=R.filter(r=>!(r.sys&&R.some(y=>y.id!==r.id&&y.sys===r.sys&&per(y)<per(r))));if(!C.length)return"";const nx=C.map(nextRev).sort()[0];return `Hurrengo berrikuspena: <span class="rgd">${fmtY(nx)}</span>`})()}</span>${RG_FOLD.includes(g)?`<button class="btn sm" data-rgf="${esc(g)}">📁 ${(RGF[g]||[]).length}</button>`:""}<button class="btn sm" data-rga="${esc(g)}">+</button></summary><div class="list">${(()=>{const S=[...new Set(R.filter(r=>r.sys).map(r=>r.sys))];return R.filter(r=>!r.sys).map(revRow).join("")+S.map(s=>{const Rs=R.filter(r=>r.sys===s).sort((a,b)=>(a.n*(a.u==="urte"?12:1))-(b.n*(b.u==="urte"?12:1))),sk=g+"|"+s,l2=Rs.filter(r=>daysTo(nextRev(r))<=0).length;return `<details class="rg rs" data-rg="${esc(sk)}"${RGO.has(sk)?" open data-anim=\"0\"":""}><summary><span class="rgn">${esc(s)}</span><span class="rgc">${l2?`<b style="color:var(--urg)">${l2} egiteko</b>`:""}</span></summary><div class="list">${Rs.map(revRow).join("")}</div></details>`}).join("")||`<div class="note">Hutsik</div>`})()}</div></details>`}).join("")})()}`:
  `<div class="empty"><p>Oraindik ez dago berrikuspenik.<br>Gehitu aldian behin egin behar dituzun berrikuspenak (su-itzalgailuak, galdara…), eta app-ak esango dizu noiz dagokien hurrengoa.</p><p class="note">Ideia batzuk, sakatu gehitzeko:</p><div class="filters" style="justify-content:center">${SUG.map((x,i)=>`<button class="chip" data-sug="${i}">+ ${x[0]} · ${freqTxt({n:x[1],u:x[2]})}</button>`).join("")}</div></div>`}</div>`;
  $("rN").onclick=()=>editRev();
- V.querySelectorAll("details[data-rg]").forEach(d=>d.ontoggle=()=>{d.open?RGO.add(d.dataset.rg):RGO.delete(d.dataset.rg)});
+ V.querySelectorAll("details[data-rg]").forEach(d=>d.ontoggle=()=>accTog(d,RGO,d.dataset.rg));
  V.querySelectorAll(".rgl").forEach(l=>l.onclick=ev=>ev.stopPropagation());
  V.querySelectorAll("[data-rgu]").forEach(inp=>inp.onchange=async()=>{const f=inp.files[0],g=inp.dataset.rgu;inp.value="";if(!f)return;if(!AS){toast("Ezin da logoa igo hemen");return}
   try{const r=await AS.upload(f,{type:f.type||"image/png"});const old=RGL[g];RGL={...RGL,[g]:r.id};if(DB)await DB.collection("config").doc("rgroups").set({logos:RGL});render();if(old)try{await AS.delete(old)}catch(x){}}catch(x){toast("Ezin izan da logoa igo")}});
@@ -1048,14 +1075,17 @@ function manageSpaces(){
  $("sheet").querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>editSpace(sp(b.dataset.s)));
  $("mC").onclick=close;$("mA").onclick=()=>editSpace()}
 
-$("vRooms").onclick=()=>{view="rooms";room=null;render()};
-$("vAll").onclick=()=>{view="rev";render()};
-$("vCal").onclick=()=>{view="cal";render()};
-$("vDoc").onclick=()=>{view="doc";render()};
-$("vStaff").onclick=()=>{view="staff";render()};
+function accTog(d,S,k){if(d.open){S.add(k);if(d.dataset.anim!=="0"){[...d.children].forEach(c=>{if(c.tagName!=="SUMMARY"){c.classList.remove("anim");void c.offsetWidth;c.classList.add("anim")}})}d.dataset.anim="1";[...d.parentElement.children].forEach(o=>{if(o!==d&&o.tagName==="DETAILS"&&o.open)o.open=false})}else{S.delete(k);d.querySelectorAll("details[open]").forEach(c=>c.open=false)}}
+function animV(){const v=$("view");if(!v)return;v.classList.remove("anim");void v.offsetWidth;v.classList.add("anim")}
+const tab=v=>{RGO.clear();DGO.clear();SGO.clear();OZ=[];LSset("mnt_open",OZ);view=v;render();animV();scrollTo(0,0)};
+$("vRooms").onclick=()=>{room=null;tab("rooms")};
+$("vAll").onclick=()=>tab("rev");
+$("vCal").onclick=()=>tab("cal");
+$("vDoc").onclick=()=>tab("doc");
+$("vStaff").onclick=()=>tab("staff");
 $("bSpaces").onclick=manageSpaces;
 $("sy").onchange=e=>{SY=e.target.value;LSset("mnt_year",SY);render()};
-$("jump").onchange=e=>{const v=e.target.value;view="rooms";room=v||null;render();scrollTo(0,0)};
+$("jump").onchange=e=>{const v=e.target.value;view="rooms";room=v||null;render();animV();scrollTo(0,0)};
 
 
 /* ---------- Firebase ---------- */
@@ -1089,7 +1119,7 @@ function start(){const err=e=>{if(e&&e.code==="permission-denied")denied(FBU);el
  DB=FB;spaces=[];ALL=[];events=[];revs=[];docs=[];staff=[];render();
  const on=(c,f)=>SUBS.push(FB.collection(c).onSnapshot(f,err));
  on("spaces",s=>{spaces=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();imp(s)});
- on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();if(Array.isArray(z))ZU=z;render()});
+ on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];if(Array.isArray(z))ZU=z;render()});
  on("staff",s=>{staff=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("docs",s=>{docs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();if(!$("ov").hidden&&window._docRefresh)window._docRefresh()});
  on("revs",s=>{revs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
