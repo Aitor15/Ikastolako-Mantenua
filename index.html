@@ -301,6 +301,7 @@ body.dragging{overflow:hidden}
 .zone .grid{display:flex;flex-direction:column;gap:6px}.zone .room{flex-direction:row;align-items:center;min-height:0;padding:11px 12px;gap:10px}.zone .room h3{font-size:16px;flex:1;min-width:0;padding-right:0}.zone .room .tut{max-width:40%;flex:none}.zone .room .meta{white-space:nowrap;flex:none}.zone .room .dot{position:static;order:-1;flex:none}.zone .room:not(.addroom){background:#22324b;border-color:#34496a}.zone .room.has-urg{border-color:var(--urg)}.zone .room.addroom{justify-content:center;color:var(--mute)}
 @keyframes drop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:no-preference){.anim{animation:drop .28s ease-out both}.grid.anim{animation:none}.grid.anim>*{animation:drop .3s ease-out both}.grid.anim>*:nth-child(2){animation-delay:.03s}.grid.anim>*:nth-child(3){animation-delay:.06s}.grid.anim>*:nth-child(4){animation-delay:.09s}.grid.anim>*:nth-child(5){animation-delay:.12s}.grid.anim>*:nth-child(6){animation-delay:.15s}.grid.anim>*:nth-child(n+7){animation-delay:.18s}}
 .tgl{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tgc{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:500;cursor:pointer;background:var(--surface)}.tgc input{margin:0;accent-color:var(--acc)}.tgc:has(input:checked){border-color:var(--acc);background:rgba(255,182,39,.12)}
+.warnx{display:block;color:var(--urg);font-size:13px;font-weight:600;margin-top:6px;text-transform:none;letter-spacing:0}input.bad{border-color:var(--urg)!important}
 </style>
 
 <div class="wrap">
@@ -433,7 +434,7 @@ const saveSTG=()=>{if(DB)DB.collection("config").doc("staffgroups").set({list:ST
 const SGREN={"Sukaldari orokorra":"Sukaldari burua"},sgRen=x=>SGREN[x]||x;
 const grpsOf=c=>[...new Set([].concat(c.grps||(c.grp?[c.grp]:[])).map(sgRen))].filter(x=>STG.includes(x));
 const inGrp=(c,g)=>{const G=grpsOf(c);return g===NOGRP?!G.length:G.includes(g)};
-const byNm=(a,b)=>a.name.localeCompare(b.name,"es");const stgSorted=()=>STG.slice().sort((a,b)=>a.localeCompare(b,"es"));
+const nrm=s=>(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();const byNm=(a,b)=>a.name.localeCompare(b.name,"es");const stgSorted=()=>STG.slice().sort((a,b)=>a.localeCompare(b,"es"));
 function staffMatch(c){const q=sq.trim().toLowerCase();return !q||c.name.toLowerCase().includes(q)||grpsOf(c).some(x=>x.toLowerCase().includes(q))||(c.role||"").toLowerCase().includes(q)||gelakOf(c.id).some(x=>x.name.toLowerCase().includes(q))}
 function staffBody(){const q=sq.trim();if(!staff.length)return `<div class="empty">Oraindik ez dago langilerik.<br>Sakatu “+ Langilea” lehena gehitzeko.</div>`;
  if(q){const L=staff.filter(staffMatch).sort(byNm);return L.length?L.map(staffRow).join(""):`<div class="empty">Ez da inor aurkitu.</div>`}
@@ -450,7 +451,9 @@ function drawStaff(V){
  bindStaff(V)}
 function newStaffGroup(cb){sheet(`<h3>Talde berria</h3><label class="f">Taldearen izena<input id="tgN" autocomplete="off"></label><div class="acts"><span class="grow"></span><button class="btn" id="tgC">Utzi</button><button class="btn pri" id="tgG">Sortu</button></div>`);
  setTimeout(()=>$("tgN").focus(),0);$("tgC").onclick=close;
- $("tgG").onclick=()=>{const v=$("tgN").value.trim().replace(/\s+/g," ");if(!v){$("tgN").focus();return}const ex=STG.find(x=>x.toLowerCase()===v.toLowerCase());
+ $("tgN").oninput=()=>{const w=$("tgW");if(w)w.remove()};
+ $("tgG").onclick=()=>{const v=$("tgN").value.trim().replace(/\s+/g," ");if(!v){$("tgN").focus();return}const ex=STG.find(x=>nrm(x)===nrm(v));
+  if(ex){if(!$("tgW"))$("tgN").insertAdjacentHTML("afterend",`<span class="warnx" id="tgW">⚠︎ “${esc(ex)}” taldea dagoeneko badago</span>`);$("tgN").focus();return}
   if(!ex){STG=[...STG,v];saveSTG()}close();if(typeof cb==="function")cb(ex||v);else{SGO.clear();SGO.add(ex||v);render()}};
  $("tgN").onkeydown=e=>{if(e.key==="Enter")$("tgG").click()}}
 function bindStaff(V){V.querySelectorAll("details[data-sg]").forEach(d=>d.ontoggle=()=>accTog(d,SGO,d.dataset.sg));
@@ -473,7 +476,10 @@ function editStaff(c,g0){const n=!c;c=c?cl(c):{id:uid("p"),name:"",phone:"",role
  $("pC").onclick=close;
  const chk=()=>[...$("pTg").querySelectorAll("input:checked")].map(i=>i.value);
  $("pTn").onclick=()=>{const nm=$("pN").value,gl=$("pGl").value,cur=chk();newStaffGroup(ng=>{c.name=nm;c.grps=[...new Set([...cur,ng])];c.grp="";editStaff(c);setTimeout(()=>{$("pGl").value=gl},0)})};
- $("pG").onclick=()=>{const v=$("pN").value.trim();if(!v){$("pN").focus();return}c.name=v;c.grps=chk();c.grp="";
+ $("pN").oninput=()=>{const w=$("pNw");if(w)w.remove();$("pN").classList.remove("bad")};
+ $("pG").onclick=()=>{const v=$("pN").value.trim().replace(/\s+/g," ");if(!v){$("pN").focus();return}
+  const dup=staff.find(x=>x.id!==c.id&&nrm(x.name)===nrm(v));if(dup){if(!$("pNw"))$("pN").insertAdjacentHTML("afterend",`<span class="warnx" id="pNw">⚠︎ “${esc(dup.name)}” izena dagoeneko badago</span>`);$("pN").classList.add("bad");$("pN").focus();return}
+  c.name=v;c.grps=chk();c.grp="";
   const i=staff.findIndex(x=>x.id===c.id);if(i>=0)staff[i]=c;else staff.push(c);put("staff",c);syncTutor(c);
   const sel=$("pGl").value;spaces.filter(s=>hasTutor(s.zone,s.name)).forEach(s=>{const t=tutOf(s),on=s.id===sel;
    if(on&&(!t||t.id!==c.id||t.name!==c.name))saveSpace(setTut(s,c));else if(!on&&t&&t.id===c.id)saveSpace(setTut(s,null))});close();render()};
