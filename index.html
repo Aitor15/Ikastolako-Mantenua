@@ -704,7 +704,7 @@ let RGL={},RGF={},DCO=[],DCG={};
 const GREM0=["ITURGINTZA","ELEKTRIZITATEA","ERREFORMAK","AROTZA","SEGURTASUNA","GARBIKETA","KLIMATIZAZIOA","BEROGAILUA"];let GREM=GREM0.slice();
 const gremOf=k=>{if(DCG[k]==="BESTEAK")return"BESTEAK";if(DCG[k]&&GREM.includes(DCG[k]))return DCG[k];const n=k.toLowerCase(),g=gremGuess(n);return GREM.includes(g)?g:"BESTEAK"};
 const gremGuess=n=>{return /iturgin|fontaner/.test(n)?"ITURGINTZA":/elektri|electri/.test(n)?"ELEKTRIZITATEA":/erreform|eraikun|obra|reform|construc/.test(n)?"ERREFORMAK":/arotz|carpint/.test(n)?"AROTZA":/segurtasun|sute|incendi|lehengoak/.test(n)?"SEGURTASUNA":/garbi|limpi/.test(n)?"GARBIKETA":/klima|clima|protech/.test(n)?"KLIMATIZAZIOA":/berogai|galdar|calefac|tecman/.test(n)?"BEROGAILUA":"BESTEAK"};const RG_FOLD=[];const hasFolder=r=>!!r;const RGO=new Set();const gImg=id=>`<img data-blob="${esc(id)}" alt="">`;
-const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS",...revs.map(r=>r.group).filter(Boolean)])].sort();
+const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS","CH GROUP",...revs.map(r=>r.group).filter(Boolean)])].sort();
 /* ---------- Protokolo-txantiloiak (PDF gainean betetzeko) ---------- */
 const PROTOS={};
 const protoOf=r=>!r||r.proto==="none"?null:(r.proto&&PROTOS[r.proto])||(/DETEK|DETEC/i.test(r.name||"")?PROTOS.det:/BIE/i.test(r.name||"")?PROTOS.bie:/EXTINTOR|ITZAL|ITZAIL/i.test(r.name||"")?PROTOS.ext:null);
