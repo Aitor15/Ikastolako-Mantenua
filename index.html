@@ -319,6 +319,10 @@ details.rg.gs-ry{background:linear-gradient(100deg,rgba(255,182,39,.2),rgba(255,
 .rg.rgm>.dsub>.rg.rc .dsub .rg.rs{background:rgba(255,255,255,.04);border-color:#34496a}
 .gadd{width:100%;border:1px dashed var(--line);background:transparent;border-radius:12px;padding:13px;color:var(--mute);font:inherit;font-weight:600;cursor:pointer}
 .grdel{align-self:flex-end;color:var(--mute)}
+.sgm>.dsub>.task.st{background:#22324b;border-color:#34496a;margin:0}.sgm .zc{text-align:right}
+.zh .zn,.rg.rgm>summary.zh .zn{font:700 18px/1.1 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--acc);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.zh .zc{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.grbar{display:flex;gap:8px;justify-content:flex-end}
+.sgc .dsub{padding:0 10px 10px;gap:6px}.sgc .task.st{background:rgba(255,255,255,.05);border-color:#3c5276;margin:0}.sgc .grbar .grdel{font-size:12px}
 </style>
 
 <div class="wrap">
@@ -454,8 +458,9 @@ function staffRow(c){const g=gelakOf(c.id);
  ${g.length?`<div class="gch">${g.map(x=>`<span class="gc">${esc(x.name)}</span>`).join("")}</div>`:""}</div>
  <div class="sxs"><button class="sx se" data-sed="${esc(c.id)}" aria-label="Editatu ${esc(c.name)}">✎</button><button class="sx" data-sx="${esc(c.id)}" aria-label="Ezabatu ${esc(c.name)}">✕</button></div></div>`}
 const STG0=["Irakasleak","Mantenu arduraduna","Sukaldari burua","Sukaldari laguntzailea","Jangelako arduraduna","Idazkaria","Idazkari orokorra","Administraria","Administrari orokorra","Zuzendari orokorra","DBH zuzendaria","LH zuzendaria","DBH orientatzailea","LH orientatzailea","HH orientatzailea"];
-let STG=STG0.slice();const SGO=new Set(),NOGRP="Talde gabe";
-const saveSTG=()=>{if(DB)DB.collection("config").doc("staffgroups").set({list:STG}).catch(()=>toast("Ezin izan da gorde"))};
+let STG=STG0.slice(),STP=[],SGP={};const SGO=new Set(),NOGRP="Talde gabe";
+const saveSTG=()=>{Object.keys(SGP).forEach(k=>{if(!STG.includes(k)||!STP.includes(SGP[k]))delete SGP[k]});if(DB)DB.collection("config").doc("staffgroups").set({list:STG,parents:STP,parentOf:SGP}).catch(()=>toast("Ezin izan da gorde"))};
+const parSel=(v,id)=>`<label class="f">Talde nagusia<select id="${id||"tgP"}"><option value="">— Bat ere ez —</option>${STP.slice().sort((a,b)=>a.localeCompare(b,"es")).map(p=>`<option${p===v?" selected":""}>${esc(p)}</option>`).join("")}</select></label>`;
 const SGREN={"Sukaldari orokorra":"Sukaldari burua"},sgRen=x=>SGREN[x]||x;
 const grpsOf=c=>[...new Set([].concat(c.grps||(c.grp?[c.grp]:[])).map(sgRen))].filter(x=>STG.includes(x));
 const inGrp=(c,g)=>{const G=grpsOf(c);return g===NOGRP?!G.length:G.includes(g)};
@@ -464,26 +469,43 @@ const nrm=s=>(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase
 function staffMatch(c){const q=sq.trim().toLowerCase();return !q||c.name.toLowerCase().includes(q)||grpsOf(c).some(x=>x.toLowerCase().includes(q))||(c.role||"").toLowerCase().includes(q)||gelakOf(c.id).some(x=>x.name.toLowerCase().includes(q))}
 function staffBody(){const q=sq.trim();if(!staff.length)return `<div class="empty">Oraindik ez dago langilerik.<br>Sakatu “+ Langilea” lehena gehitzeko.</div>`;
  if(q){const L=staff.filter(staffMatch).sort(byNm);return L.length?L.map(staffRow).join(""):`<div class="empty">Ez da inor aurkitu.</div>`}
- const G=[...stgSorted(),...(staff.some(c=>!grpsOf(c).length)?[NOGRP]:[])];
- return G.map(g=>{const L=staff.filter(c=>inGrp(c,g)).sort(byNm),own=!STG0.includes(g)&&g!==NOGRP;
-  return `<details class="rg" data-sg="${esc(g)}"${SGO.has(g)?' open data-anim="0"':""}><summary><span class="rgn">${esc(g)}</span><span class="rgc">${L.length?L.length:""}</span>${own?`<button class="btn sm" data-sgx="${esc(g)}" aria-label="Taldea ezabatu">✕</button>`:""}<button class="btn sm" data-sga="${esc(g===NOGRP?"":g)}" aria-label="Langilea gehitu">+</button></summary><div class="list">${L.length?L.map(staffRow).join(""):`<div class="note" style="padding:4px 2px">Oraindik ez dago inor talde honetan.</div>`}</div></details>`}).join("")}
+ const parOf=g=>SGP[g]&&STP.includes(SGP[g])?SGP[g]:"";
+ const child=g=>{const L=staff.filter(c=>inGrp(c,g)).sort(byNm);return `<details class="rg rc sgc" data-sg="${esc(g)}"${SGO.has(g)?' open data-anim="0"':""}><summary><span class="rgn">${esc(g)}</span><span class="rgc">${L.length} langile</span></summary><div class="dsub">${L.map(staffRow).join("")}<button class="gadd" data-sga="${esc(g)}">+ Gehitu langilea ${esc(g)} taldean</button><div class="grbar"><button class="btn sm grdel" data-sgr="${esc(g)}">✎ Editatu</button><button class="btn sm grdel" data-sgx="${esc(g)}">✕ Taldea ezabatu</button></div></div></details>`};
+ const par=p=>{const K=stgSorted().filter(g=>parOf(g)===p),n=new Set(staff.filter(c=>grpsOf(c).some(g=>K.includes(g))).map(c=>c.id)).size,k="P:"+p;
+  return `<details class="rg rgm sgm sgp" data-sg="${esc(k)}"${SGO.has(k)?' open data-anim="0"':""}><summary class="zh"><span class="zn">${esc(p)}</span><span class="zc">${K.length} talde · ${n} langile</span><span class="zv" aria-hidden="true">›</span></summary><div class="dsub">${K.map(child).join("")}<button class="gadd" data-spa="${esc(p)}">+ Taldea sortu ${esc(p)} barruan</button><div class="grbar"><button class="btn sm grdel" data-spr="${esc(p)}">✎ Izena aldatu</button><button class="btn sm grdel" data-spx="${esc(p)}">✕ Ezabatu</button></div></div></details>`};
+ const TOP=[...STP.map(p=>({p})),...stgSorted().filter(g=>!parOf(g)).map(g=>({g}))].sort((a,b)=>(a.p||a.g).localeCompare(b.p||b.g,"es"));
+ const G=[...TOP,...(staff.some(c=>!grpsOf(c).length)?[{g:NOGRP}]:[])];
+ return G.map(o=>{if(o.p)return par(o.p);const g=o.g;const L=staff.filter(c=>inGrp(c,g)).sort(byNm),own=g!==NOGRP;
+  return `<details class="rg rgm sgm" data-sg="${esc(g)}"${SGO.has(g)?' open data-anim="0"':""}><summary class="zh"><span class="zn">${esc(g)}</span><span class="zc">${L.length} langile</span><span class="zv" aria-hidden="true">›</span></summary><div class="dsub">${L.map(staffRow).join("")}<button class="gadd" data-sga="${esc(g===NOGRP?"":g)}">+ Gehitu langilea ${esc(g)} taldean</button>${own?`<div class="grbar"><button class="btn sm grdel" data-sgr="${esc(g)}">✎ Editatu</button><button class="btn sm grdel" data-sgx="${esc(g)}">✕ Taldea ezabatu</button></div>`:""}</div></details>`}).join("")}
 function drawStaff(V){
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Langileak</h2></div>
- <div class="acts"><button class="btn sm pri" id="sfN">+ Langilea</button><button class="btn sm" id="sfT">+ Taldea</button></div>
+ <div class="acts"><button class="btn sm pri" id="sfN">+ Langilea</button><button class="btn sm" id="sfT">+ Taldea</button><button class="btn sm" id="sfP">+ Talde nagusia</button></div>
  ${staff.length?`<input class="srch" id="sfQ" placeholder="Bilatu izenez, taldez edo gelaz…" value="${esc(sq)}" autocomplete="off"><div class="note">${staff.length} langile · ${spaces.filter(x=>tutOf(x)).length} gelak dute tutorea</div>`:""}
  <div class="list" id="sfL">${staffBody()}</div></div>`;
- $("sfN").onclick=()=>editStaff();$("sfT").onclick=newStaffGroup;
+ $("sfN").onclick=()=>editStaff();$("sfT").onclick=()=>newStaffGroup();$("sfP").onclick=()=>parentSheet();
  const qi=$("sfQ");if(qi)qi.oninput=()=>{sq=qi.value;$("sfL").innerHTML=staffBody();bindStaff(V)};
  bindStaff(V)}
-function newStaffGroup(cb){sheet(`<h3>Talde berria</h3><label class="f">Taldearen izena<input id="tgN" autocomplete="off"></label><div class="acts"><span class="grow"></span><button class="btn" id="tgC">Utzi</button><button class="btn pri" id="tgG">Sortu</button></div>`);
+function parentSheet(o){sheet(`<h3>${o?"Talde nagusia":"Talde nagusi berria"}</h3><div class="note">Talde nagusi baten barruan beste talde batzuk sar ditzakezu (adib.: Administrazioa → Administraria, Idazkaria…).</div><label class="f">Izena<input id="tpN" value="${esc(o||"")}" autocomplete="off"></label><div class="acts"><span class="grow"></span><button class="btn" id="tpC">Utzi</button><button class="btn pri" id="tpG">${o?"Gorde":"Sortu"}</button></div>`);
+ setTimeout(()=>{$("tpN").focus();$("tpN").select()},0);$("tpC").onclick=close;$("tpN").oninput=()=>{const w=$("tpW");if(w)w.remove()};
+ $("tpG").onclick=()=>{const v=$("tpN").value.trim().replace(/\s+/g," ");if(!v){$("tpN").focus();return}if(v===o){close();return}const ex=[...STP,...STG].find(x=>x!==o&&nrm(x)===nrm(v));
+  if(ex){if(!$("tpW"))$("tpN").insertAdjacentHTML("afterend",`<span class="warnx" id="tpW">⚠︎ “${esc(ex)}” izena dagoeneko badago</span>`);return}
+  if(o){STP=STP.map(x=>x===o?v:x);Object.keys(SGP).forEach(k=>{if(SGP[k]===o)SGP[k]=v})}else STP=[...STP,v];saveSTG();SGO.clear();SGO.add("P:"+v);close();render()};
+ $("tpN").onkeydown=e=>{if(e.key==="Enter")$("tpG").click()}}
+function newStaffGroup(cb,p0){sheet(`<h3>Talde berria</h3><label class="f">Taldearen izena<input id="tgN" autocomplete="off"></label>${STP.length?parSel(p0||""):""}<div class="acts"><span class="grow"></span><button class="btn" id="tgC">Utzi</button><button class="btn pri" id="tgG">Sortu</button></div>`);
  setTimeout(()=>$("tgN").focus(),0);$("tgC").onclick=close;
  $("tgN").oninput=()=>{const w=$("tgW");if(w)w.remove()};
  $("tgG").onclick=()=>{const v=$("tgN").value.trim().replace(/\s+/g," ");if(!v){$("tgN").focus();return}const ex=STG.find(x=>nrm(x)===nrm(v));
   if(ex){if(!$("tgW"))$("tgN").insertAdjacentHTML("afterend",`<span class="warnx" id="tgW">⚠︎ “${esc(ex)}” taldea dagoeneko badago</span>`);$("tgN").focus();return}
-  if(!ex){STG=[...STG,v];saveSTG()}close();if(typeof cb==="function")cb(ex||v);else{SGO.clear();SGO.add(ex||v);render()}};
+  if(!ex){STG=[...STG,v];const pp=$("tgP")?$("tgP").value:"";if(pp)SGP[v]=pp;saveSTG()}close();if(typeof cb==="function")cb(ex||v);else{SGO.clear();const pp=SGP[v];if(pp)SGO.add("P:"+pp);SGO.add(ex||v);render()}};
  $("tgN").onkeydown=e=>{if(e.key==="Enter")$("tgG").click()}}
 function bindStaff(V){V.querySelectorAll("details[data-sg]").forEach(d=>d.ontoggle=()=>accTog(d,SGO,d.dataset.sg));
  V.querySelectorAll("[data-sga]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();editStaff(null,b.dataset.sga)});
+ V.querySelectorAll("[data-sgr]").forEach(b=>b.onclick=e=>{e.preventDefault();const o=b.dataset.sgr;sheet(`<h3>Taldea</h3><label class="f">Izena<input id="tgN" value="${esc(o)}" autocomplete="off"></label>${parSel(SGP[o]||"")}<div class="acts"><span class="grow"></span><button class="btn" id="tgC">Utzi</button><button class="btn pri" id="tgG">Gorde</button></div>`);setTimeout(()=>{$("tgN").focus();$("tgN").select()},0);$("tgC").onclick=close;$("tgN").oninput=()=>{const w=$("tgW");if(w)w.remove()};
+  $("tgG").onclick=()=>{const v=$("tgN").value.trim().replace(/\s+/g," ");if(!v){$("tgN").focus();return}const pp=$("tgP").value;if(v===o){if(pp)SGP[o]=pp;else delete SGP[o];saveSTG();SGO.clear();if(pp)SGO.add("P:"+pp);SGO.add(o);close();render();return}const ex=[...STG,...STP].find(x=>x!==o&&nrm(x)===nrm(v));if(ex){if(!$("tgW"))$("tgN").insertAdjacentHTML("afterend",`<span class="warnx" id="tgW">⚠︎ “${esc(ex)}” taldea dagoeneko badago</span>`);return}
+   const aff=staff.filter(c=>grpsOf(c).includes(o)||c.grp===o);STG=STG.map(x=>x===o?v:x);delete SGP[o];if(pp)SGP[v]=pp;saveSTG();aff.forEach(c=>{const y=cl(c);y.grps=[...new Set([].concat(c.grps||(c.grp?[c.grp]:[])).map(sgRen).map(x=>x===o?v:x))];y.grp="";const i=staff.findIndex(x=>x.id===c.id);staff[i]=y;put("staff",y)});SGO.clear();if(pp)SGO.add("P:"+pp);SGO.add(v);close();render()}});
+ V.querySelectorAll("[data-spa]").forEach(b=>b.onclick=e=>{e.preventDefault();newStaffGroup(null,b.dataset.spa)});
+ V.querySelectorAll("[data-spr]").forEach(b=>b.onclick=e=>{e.preventDefault();parentSheet(b.dataset.spr)});
+ V.querySelectorAll("[data-spx]").forEach(b=>b.onclick=e=>{e.preventDefault();if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur? (barruko taldeak kanpora)";return}const p=b.dataset.spx;STP=STP.filter(x=>x!==p);Object.keys(SGP).forEach(k=>{if(SGP[k]===p)delete SGP[k]});saveSTG();SGO.delete("P:"+p);render()});
  V.querySelectorAll("[data-sgx]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ezabatu?";return}const g=b.dataset.sgx;STG=STG.filter(x=>x!==g);saveSTG();SGO.delete(g);staff.filter(c=>grpsOf(c).includes(g)||c.grp===g).forEach(c=>{const y=cl(c);y.grps=grpsOf(c).filter(x=>x!==g);y.grp="";const i=staff.findIndex(x=>x.id===c.id);staff[i]=y;put("staff",y)});render()});
  V.querySelectorAll("[data-sed]").forEach(b=>b.onclick=e=>{e.stopPropagation();editStaff(staff.find(x=>x.id===b.dataset.sed));setTimeout(()=>{const i=$("pN");if(i){i.focus();i.select()}},60)});
  V.querySelectorAll("[data-sx]").forEach(b=>b.onclick=e=>{e.stopPropagation();if(b.dataset.a!=="1"){b.dataset.a="1";b.classList.add("sure");b.textContent="Ezabatu?";setTimeout(()=>{if(b.isConnected){b.dataset.a="";b.classList.remove("sure");b.textContent="✕"}},4000);return}
@@ -1167,7 +1189,7 @@ function start(){const err=e=>{if(e&&e.code==="permission-denied")denied(FBU);el
  DB=FB;spaces=[];ALL=[];events=[];revs=[];docs=[];staff=[];render();
  const on=(c,f)=>SUBS.push(FB.collection(c).onSnapshot(f,err));
  on("spaces",s=>{spaces=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();imp(s)});
- on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];if(Array.isArray(z))ZU=z;render()});
+ on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];STP=(sgd&&cl(sgd.data()).parents)||[];SGP=(sgd&&cl(sgd.data()).parentOf)||{};if(Array.isArray(z))ZU=z;render()});
  on("staff",s=>{staff=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("docs",s=>{docs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();if(!$("ov").hidden&&window._docRefresh)window._docRefresh()});
  on("revs",s=>{revs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
