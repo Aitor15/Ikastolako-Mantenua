@@ -482,7 +482,7 @@ function staffBody(){const q=sq.trim();if(!staff.length)return `<div class="empt
   return `<details class="rg rgm sgm" data-sg="${esc(g)}"${SGO.has(g)?' open data-anim="0"':""}><summary class="zh"><span class="zn">${esc(g)}</span><span class="zc">${L.length} langile</span><span class="zv" aria-hidden="true">›</span></summary><div class="dsub">${L.map(staffRow).join("")}<button class="gadd" data-sga="${esc(g===NOGRP?"":g)}">+ Gehitu langilea ${esc(g)} taldean</button>${own?`<div class="grbar"><button class="btn sm grdel" data-sgu="${esc(g)}">⬆︎ Talde nagusi bihurtu</button><button class="btn sm grdel" data-sgr="${esc(g)}">✎ Editatu</button><button class="btn sm grdel" data-sgx="${esc(g)}">✕ Taldea ezabatu</button></div>`:""}</div></details>`}).join("")}
 function drawStaff(V){
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Langileak</h2></div>
- <div class="acts"><button class="btn sm pri" id="sfN">+ Langilea</button><button class="btn sm" id="sfT">+ Taldea</button><button class="btn sm" id="sfP">+ Talde nagusia</button></div>
+ <div class="acts"><button class="btn sm" id="sfN">+ Langilea</button><button class="btn sm" id="sfT">+ Taldea</button><button class="btn sm" id="sfP">+ Talde nagusia</button></div>
  ${staff.length?`<input class="srch" id="sfQ" placeholder="Bilatu izenez, taldez edo gelaz…" value="${esc(sq)}" autocomplete="off"><div class="note">${staff.length} langile · ${spaces.filter(x=>tutOf(x)).length} gelak dute tutorea</div>`:""}
  <div class="list" id="sfL">${staffBody()}</div></div>`;
  $("sfN").onclick=()=>editStaff();$("sfT").onclick=()=>newStaffGroup();$("sfP").onclick=()=>parentSheet();
