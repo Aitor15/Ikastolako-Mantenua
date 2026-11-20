@@ -304,6 +304,9 @@ body.dragging{overflow:hidden}
 .warnx{display:block;color:var(--urg);font-size:13px;font-weight:600;margin-top:6px;text-transform:none;letter-spacing:0}input.bad{border-color:var(--urg)!important}
 @keyframes latep{0%,100%{background:rgba(255,77,77,.08);border-color:rgba(255,77,77,.55);box-shadow:0 0 0 0 rgba(255,77,77,0)}50%{background:rgba(255,77,77,.28);border-color:#ff4d4d;box-shadow:0 0 14px 2px rgba(255,77,77,.45)}}details.rg.late{animation:latep 1.4s ease-in-out infinite;border:1.5px solid #ff4d4d}@media (prefers-reduced-motion:reduce){details.rg.late{animation:none;background:rgba(255,77,77,.2)}}
 .mvs{background:var(--surface);color:var(--ink,inherit);border:1px solid var(--line);border-radius:8px;padding:5px 4px;font-size:13px;max-width:44px}.fi.dir a{font-weight:700}
+.av.bday{position:relative;overflow:hidden;background:linear-gradient(120deg,#ff4d8d,#b14dff 55%,#4d7dff);color:#fff;animation:none!important}.av.bday .avd{background:#fff;color:#c2185b}.av.bday.bihar{background:linear-gradient(120deg,#5b2a7a,#3a2f7a);opacity:.95}.av.bday .avt,.av.bday .avd,.av.bday .avh{position:relative;z-index:1}.av.bday .avh{font-size:20px}
+.cf{position:absolute;inset:0;pointer-events:none}.cf i{position:absolute;top:-10px;width:7px;height:11px;opacity:.9;animation:cff 2.6s linear infinite}@keyframes cff{0%{transform:translateY(-12px) rotate(0)}100%{transform:translateY(90px) rotate(540deg);opacity:.2}}
+.cfx{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9999}@media (prefers-reduced-motion:reduce){.cf{display:none}}
 </style>
 
 <div class="wrap">
@@ -370,9 +373,17 @@ const CY=yr(today);let SY=LS("mnt_year",CY);
 const inYear=t=>SY==="all"||(open(t)?yr(t.created)<=SY:yr(t.doneAt||t.created)===SY);
 function yearSel(){const NY=(()=>{const a=+CY.slice(0,4)+1;return a+"-"+String((a+1)%100).padStart(2,"0")})();const ys=[...new Set([NY,CY,...ALL.map(t=>yr(t.created))])].sort().reverse();if(SY!=="all"&&!ys.includes(SY))SY=CY;
  $("sy").innerHTML=ys.map(y=>`<option value="${y}"${y===SY?" selected":""}>${y}</option>`).join("")+`<option value="all"${SY==="all"?" selected":""}>Ikasturte guztiak</option>`}
+function confettiBurst(el){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,C=["#ff4d6d","#ffd166","#06d6a0","#4cc9f0","#b388ff","#ff9f1c"];
+ const cv=document.createElement("canvas");cv.className="cfx";cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;document.body.appendChild(cv);const x=cv.getContext("2d");x.scale(devicePixelRatio,devicePixelRatio);
+ const P=Array.from({length:140},()=>{const a=Math.random()*Math.PI*2,s=4+Math.random()*9;return{x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-6,w:5+Math.random()*6,h:8+Math.random()*8,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:C[Math.random()*6|0]}});let t=0;
+ (function f(){x.clearRect(0,0,innerWidth,innerHeight);t++;P.forEach(p=>{p.vy+=.28;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.globalAlpha=Math.max(0,1-t/110);x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*2)));x.restore()});if(t<110)requestAnimationFrame(f);else cv.remove()})()}
 function avisos(){const A=$("avis");if(!A)return;const t=new Date(today+"T00:00");t.setDate(t.getDate()+1);const tm=iso(t);
  const L=events.filter(e=>e.type==="bilera"&&(e.date===today||e.date===tm)).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
- A.hidden=!L.length;A.innerHTML=L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
+ const md=d=>d.slice(5),B=[[today,"Gaur"],[tm,"Bihar"]].flatMap(([d,w])=>staff.filter(c=>c.bday===md(d)).sort(byNm).map(c=>({c,d,w})));
+ const CC=["#ff4d6d","#ffd166","#06d6a0","#4cc9f0","#b388ff","#ff9f1c"],conf=n=>Array.from({length:n},(_,i)=>`<i style="left:${(i*37+11)%100}%;background:${CC[i%6]};animation-delay:${((i*0.37)%2.4).toFixed(2)}s;animation-duration:${(2.2+(i%5)*0.35).toFixed(2)}s;${i%3?"":"border-radius:50%;"}"></i>`).join("");
+ A.hidden=!L.length&&!B.length;A.innerHTML=B.map(o=>`<button class="av bday${o.w==="Gaur"?"":" bihar"}" data-bd="${esc(o.c.id)}"><span class="cf" aria-hidden="true">${conf(o.w==="Gaur"?22:8)}</span><span class="avd">${o.w}</span><span class="avt">🎂 ${o.w==="Gaur"?"Zorionak, "+esc(o.c.name)+"!":"Urtebetetzea: "+esc(o.c.name)}</span><span class="avh">🎉</span></button>`).join("")+L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
+ A.querySelectorAll("[data-bd]").forEach(b=>b.onclick=()=>confettiBurst(b));
+ if(B.some(o=>o.w==="Gaur")&&!window.__cfDone){window.__cfDone=1;setTimeout(()=>{const b=A.querySelector(".bday:not(.bihar)");if(b)confettiBurst(b)},500)}
  A.querySelectorAll("[data-avd]").forEach(b=>b.onclick=()=>{view="cal";CD=b.dataset.avd;CM=CD.slice(0,7);render();animV();scrollTo(0,0)})}
 function render(){if(document.body.classList.contains("dragging"))return;tasks=ALL.filter(inYear);yearSel();avisos();
  $("mode").textContent=DB?"Hodeian gordeta · berdin ikusten da zure gailu guztietan":"Nabigatzaile honetan bakarrik gordeta";
@@ -427,7 +438,7 @@ function setTut(s,c){const y=cl(s),tu=Object.assign({},y.tutors||{});if(y.tutorI
  if(c)tu[TY()]={id:c.id,name:c.name};else delete tu[TY()];y.tutors=tu;y.tutorId="";y.tutor="";y.phone="";return y}
 const gelakOf=id=>spaces.filter(x=>(tutOf(x)||{}).id===id).sort(byOrd);
 function staffRow(c){const g=gelakOf(c.id);
- return `<div class="task st"><div class="tb" data-se="${esc(c.id)}"><div class="tt">${esc(c.name)}</div><div class="ts">${c.role?`<span>${esc(c.role)}</span>`:""}${c.phone?`<span class="tph">${esc(c.phone)}</span>`:""}</div>
+ return `<div class="task st"><div class="tb" data-se="${esc(c.id)}"><div class="tt">${esc(c.name)}</div><div class="ts">${c.bday?`<span>🎂 ${bdFmt(c.bday)}</span>`:""}${c.role?`<span>${esc(c.role)}</span>`:""}${c.phone?`<span class="tph">${esc(c.phone)}</span>`:""}</div>
  ${g.length?`<div class="gch">${g.map(x=>`<span class="gc">${esc(x.name)}</span>`).join("")}</div>`:""}</div>
  <div class="sxs"><button class="sx se" data-sed="${esc(c.id)}" aria-label="Editatu ${esc(c.name)}">✎</button><button class="sx" data-sx="${esc(c.id)}" aria-label="Ezabatu ${esc(c.name)}">✕</button></div></div>`}
 const STG0=["Irakasleak","Mantenu arduraduna","Sukaldari burua","Sukaldari laguntzailea","Jangelako arduraduna","Idazkaria","Idazkari orokorra","Administraria","Administrari orokorra","Zuzendari orokorra","DBH zuzendaria","LH zuzendaria","DBH orientatzailea","LH orientatzailea","HH orientatzailea"];
@@ -436,6 +447,7 @@ const saveSTG=()=>{if(DB)DB.collection("config").doc("staffgroups").set({list:ST
 const SGREN={"Sukaldari orokorra":"Sukaldari burua"},sgRen=x=>SGREN[x]||x;
 const grpsOf=c=>[...new Set([].concat(c.grps||(c.grp?[c.grp]:[])).map(sgRen))].filter(x=>STG.includes(x));
 const inGrp=(c,g)=>{const G=grpsOf(c);return g===NOGRP?!G.length:G.includes(g)};
+const HILB=["Urtarrila","Otsaila","Martxoa","Apirila","Maiatza","Ekaina","Uztaila","Abuztua","Iraila","Urria","Azaroa","Abendua"];const bdFmt=b=>HILB[+b.slice(0,2)-1]+"ren "+(+b.slice(3));
 const nrm=s=>(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();const byNm=(a,b)=>a.name.localeCompare(b.name,"es");const stgSorted=()=>STG.slice().sort((a,b)=>a.localeCompare(b,"es"));
 function staffMatch(c){const q=sq.trim().toLowerCase();return !q||c.name.toLowerCase().includes(q)||grpsOf(c).some(x=>x.toLowerCase().includes(q))||(c.role||"").toLowerCase().includes(q)||gelakOf(c.id).some(x=>x.name.toLowerCase().includes(q))}
 function staffBody(){const q=sq.trim();if(!staff.length)return `<div class="empty">Oraindik ez dago langilerik.<br>Sakatu “+ Langilea” lehena gehitzeko.</div>`;
@@ -471,6 +483,7 @@ function syncTutor(c){spaces.filter(x=>x.tutorId===c.id).forEach(x=>{if(x.tutor!
 function editStaff(c,g0){const n=!c;c=c?cl(c):{id:uid("p"),name:"",phone:"",role:"",grps:g0?[g0]:[]};const cg=grpsOf(c);const g=gelakOf(c.id);
  sheet(`<h3>${n?"Langile berria":esc(c.name)}</h3>
  <label class="f">Izena eta abizena<input id="pN" value="${esc(c.name)}" autocomplete="name"></label>
+ <div class="f"><span>Urtebetetzea</span><div style="display:flex;gap:8px;margin-top:6px"><select id="pBd" aria-label="Eguna" style="flex:0 0 92px"><option value="">Eguna</option>${Array.from({length:31},(_,i)=>`<option${c.bday&&+c.bday.slice(3)===i+1?" selected":""}>${i+1}</option>`).join("")}</select><select id="pBm" aria-label="Hilabetea" style="flex:1"><option value="">Hilabetea</option>${HILB.map((m,i)=>`<option value="${i+1}"${c.bday&&+c.bday.slice(0,2)===i+1?" selected":""}>${m}</option>`).join("")}</select></div></div>
  <div class="f"><span>Taldeak <small style="color:var(--mute);font-weight:400">(bat edo gehiago)</small></span><div class="tgl" id="pTg">${stgSorted().map(x=>`<label class="tgc"><input type="checkbox" value="${esc(x)}"${cg.includes(x)?" checked":""}><span>${esc(x)}</span></label>`).join("")}</div><button type="button" class="btn sm" id="pTn" style="align-self:flex-start;margin-top:6px">+ Talde berria</button></div>
  <label class="f">Gela<select id="pGl"><option value="">— Gelarik gabe —</option>${TZ.map(z=>{const R=spaces.filter(s=>s.zone===z&&hasTutor(s.zone,s.name)).sort(byOrd);return R.length?`<optgroup label="${z}">${R.map(s=>{const t=tutOf(s),mine=t&&t.id===c.id;return `<option value="${esc(s.id)}"${mine&&g[0]&&g[0].id===s.id?" selected":""}>${esc(s.name)}${t&&!mine?" · "+esc(tutName(s)):""}</option>`}).join("")}</optgroup>`:""}).join("")}</select></label>
  <div class="acts"><span class="grow"></span><button class="btn" id="pC">Utzi</button><button class="btn pri" id="pG">Gorde</button></div>`);
@@ -481,7 +494,7 @@ function editStaff(c,g0){const n=!c;c=c?cl(c):{id:uid("p"),name:"",phone:"",role
  $("pN").oninput=()=>{const w=$("pNw");if(w)w.remove();$("pN").classList.remove("bad")};
  $("pG").onclick=()=>{const v=$("pN").value.trim().replace(/\s+/g," ");if(!v){$("pN").focus();return}
   const dup=staff.find(x=>x.id!==c.id&&nrm(x.name)===nrm(v));if(dup){if(!$("pNw"))$("pN").insertAdjacentHTML("afterend",`<span class="warnx" id="pNw">⚠︎ “${esc(dup.name)}” izena dagoeneko badago</span>`);$("pN").classList.add("bad");$("pN").focus();return}
-  c.name=v;c.grps=chk();c.grp="";
+  c.name=v;c.grps=chk();c.grp="";{const d=$("pBd").value,m=$("pBm").value;if(d&&m)c.bday=String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0");else delete c.bday}
   const i=staff.findIndex(x=>x.id===c.id);if(i>=0)staff[i]=c;else staff.push(c);put("staff",c);syncTutor(c);
   const sel=$("pGl").value;spaces.filter(s=>hasTutor(s.zone,s.name)).forEach(s=>{const t=tutOf(s),on=s.id===sel;
    if(on&&(!t||t.id!==c.id||t.name!==c.name))saveSpace(setTut(s,c));else if(!on&&t&&t.id===c.id)saveSpace(setTut(s,null))});close();render()};
