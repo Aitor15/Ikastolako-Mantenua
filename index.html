@@ -605,7 +605,7 @@ function solarSheet(c,d){const D=soDays(c);if(!D.length)return;d=d&&D.some(e=>e.
 
 /* ---------- kontsumoak ---------- */
 const KIND={el:{l:"Argindarra",u:"kWh",ic:"⚡",c:"#ffb627"},ur:{l:"Ura",u:"m³",ic:"💧",c:"#4cc9f0"},gas:{l:"Gasa",u:"m³",ic:"🔥",c:"#ff7ab6"},gasol:{l:"Gasolioa",u:"L",ic:"🛢",c:"#b388ff"}};
-const KSRC={eskuz:"Eskuz",shelly:"Shelly (laster)",datadis:"Datadis (laster)"};
+const KSRC={eskuz:"Eskuz"};
 const kOf=m=>KIND[m.kind]||KIND.el;
 const nf=(v,d=0)=>{const x=Math.round(v*Math.pow(10,d))/Math.pow(10,d),[i,f]=Math.abs(x).toFixed(d).split(".");const s=(x<0?"-":"")+i.replace(/\B(?=(\d{3})+(?!\d))/g,".");return f&&+f?s+","+f.replace(/0+$/,""):s};
 const dDiff=(a,b)=>Math.round((new Date(b+"T00:00")-new Date(a+"T00:00"))/864e5);
@@ -660,8 +660,7 @@ function drawKon(V){const G={};meters.slice().sort((a,b)=>kRank(a.kind)-kRank(b.
  <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
  ${combCards()}
  ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${subOrd(L).map(meterCard).join("")}`).join(""):
- `<div class="empty"><p>Oraindik ez dago kontagailurik.<br>Gehitu argindarraren, uraren edo gasaren kontagailuak eta apuntatu irakurketak aldian behin (adib. astelehenero edo hilaren hasieran).</p><p class="note">App-ak kalkulatuko du zenbat kontsumitu den eta abisatuko dizu zerbait arraroa badago.</p></div>`}
- <div class="note" style="margin-top:14px">⚡ Laster: koadroetako Shelly neurgailuak.</div></div>`;
+ `<div class="empty"><p>Oraindik ez dago kontagailurik.<br>Gehitu argindarraren, uraren edo gasaren kontagailuak eta apuntatu irakurketak aldian behin (adib. astelehenero edo hilaren hasieran).</p><p class="note">App-ak kalkulatuko du zenbat kontsumitu den eta abisatuko dizu zerbait arraroa badago.</p></div>`}</div>`;
  $("kN").onclick=()=>editMeter();V.querySelectorAll("[data-cmb]").forEach(b=>b.onclick=()=>combSheet(b.dataset.cmb));V.querySelectorAll("[data-kt]").forEach(b=>b.onclick=()=>totSheet(b.dataset.kt));$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
  V.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>meterSheet(meters.find(x=>x.id===b.dataset.mt)))}
 function saveMeter(m){const i=meters.findIndex(x=>x.id===m.id);if(i>=0)meters[i]=m;else meters.push(m);put("meters",m)}
@@ -672,7 +671,7 @@ function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:
  <label class="f">Mota<select id="mK">${Object.entries(KIND).map(([k,v])=>`<option value="${k}"${m.kind===k?" selected":""}>${v.ic} ${v.l} (${v.u})</option>`).join("")}</select></label>
  <label class="f">Eraikina / lekua<input id="mP" value="${esc(m.place||"")}" list="mPL" placeholder="Adib.: Salbatore Mitxelena, Ixpilla"><datalist id="mPL">${places.map(p=>`<option value="${esc(p)}">`).join("")}</datalist></label>
  <label class="f">Prezioa (€ unitateko, aukerakoa)<input id="mC" type="number" step="0.0001" min="0" value="${esc(m.price??"")}" placeholder="Adib.: 0,18"></label>
- <label class="f">Datuak nondik<select id="mS">${Object.entries(KSRC).map(([k,v])=>`<option value="${k}"${(m.src||"eskuz")===k?" selected":""}>${v}</option>`).join("")}</select></label>
+ <label class="f" hidden>Datuak nondik<select id="mS">${Object.entries(KSRC).map(([k,v])=>`<option value="${k}"${(m.src||"eskuz")===k?" selected":""}>${v}</option>`).join("")}</select></label>
  <label class="f">Beste kontagailu baten barruan dago? (azpikontagailua: bere kontsumoa nagusian sartzen da, ez da batuko)<select id="mPa"></select></label>
  <label class="f" id="mRw"${(m.kind||"el")==="el"?"":" hidden"}>Zer neurtzen du (argindarra)<select id="mR"><option value="">—</option>${Object.entries(EROL).map(([k,v])=>`<option value="${k}"${m.erol===k?" selected":""}>${v}</option>`).join("")}</select></label>
  <div class="note" id="mGn"${m.kind==="gasol"?"":" hidden"}>Gasolioan, apuntatu tangaren maila (litroak). Igotzen bada, betetzea dela ulertuko da.</div>
