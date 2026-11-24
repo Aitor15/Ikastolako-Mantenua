@@ -701,7 +701,7 @@ const EROL={sarea:"🔌 Saretik erosia (orokorra 1.18.0)",plakak:"☀️ Plaken 
 function mDaily(m){const D={};mIntervals(m).forEach(x=>{if(x.neg)return;let d=new Date(x.a+"T00:00");for(let k=0;k<x.days;k++){d.setDate(d.getDate()+1);const key=iso(d);D[key]=(D[key]||0)+x.pd}});return D}
 const mDayRole=(r,d)=>meters.filter(m=>m.kind==="el"&&m.erol===r).reduce((a,m)=>a+(mDaily(m)[d]||0),0);
 function combFor(place){const M=meters.filter(m=>m.kind==="el"&&(m.place||"")===(place||"")&&m.erol&&m.erol!=="beste");
- const G=M.filter(m=>m.erol==="sarea"),P=M.filter(m=>m.erol==="plakak"),X=M.filter(m=>m.erol==="isuria"),fs=!P.length&&SOLAR.length>0;if(!G.length||(!P.length&&!fs))return null;
+ const G=M.filter(m=>m.erol==="sarea"),P=M.filter(m=>m.erol==="plakak"),X=M.filter(m=>m.erol==="isuria"),fs=SOLAR.length>0;if(!G.length||(!P.length&&!fs))return null;
  const add=(L)=>{const o={};L.forEach(m=>Object.entries(mDaily(m)).forEach(([d,v])=>o[d]=(o[d]||0)+v));return o};
  const g=add(G),x=add(X),p=fs?(()=>{const o={};SOLAR.forEach(e=>{if(e.d)o[e.d]=(o[e.d]||0)+soPV(e)});return o})():add(P);
  // egun komunak bakarrik (bi kontagailuen datuak dauden egunak)
