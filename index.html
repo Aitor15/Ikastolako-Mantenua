@@ -347,6 +347,9 @@ details.rg.gs-ry{background:linear-gradient(100deg,rgba(255,182,39,.2),rgba(255,
 .albtn{display:block;width:100%;text-align:left;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.45);color:#ffb0b0;border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;margin-top:6px;cursor:pointer}
 .gbar{flex-wrap:wrap}.gbar .gadd{flex:1 1 140px;display:block}
 .konr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:6px 2px 4px}.konr select{width:auto;padding:6px 8px;font-size:13px}.av.kon{background:linear-gradient(100deg,rgba(76,201,240,.25),rgba(76,201,240,.06) 70%);border-color:rgba(76,201,240,.5);animation:none!important}.av.kon .avd{background:#4cc9f0;color:#06262c}.av.kon,.av.kon .avt,.av.kon .avh{color:#e6f7ff}.av.kon .avh{opacity:.8}
+.cmb{display:block;width:100%;text-align:left;background:linear-gradient(100deg,rgba(61,220,151,.16),rgba(255,182,39,.10));border:1px solid rgba(61,220,151,.4);border-radius:12px;padding:12px;color:var(--ink);font:inherit;cursor:pointer;margin-top:8px}
+.cmb>b{font-size:15px}.cmv{display:flex;gap:16px;margin-top:6px}.cmv span{display:flex;flex-direction:column}.cmv small{font-size:11px;color:var(--mute);font-weight:600}.cmv b{font:700 20px var(--display)}
+.ctab{display:flex;flex-direction:column;font-size:13px}.ctab>div{display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr .6fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}.ctab>div:last-child{border:0}.ctab .cth{color:var(--mute);font-size:11px;font-weight:700;text-transform:uppercase}.ctab span{text-align:right}.ctab span:first-child{text-align:left}
 </style>
 
 <div class="wrap">
@@ -631,17 +634,18 @@ function mChart(m){const M=mMonthly(m),k=kOf(m),now=new Date(today+"T00:00"),key
 function meterCard(m){const k=kOf(m),R=mReads(m),last=R[R.length-1],I=mIntervals(m),li=I[I.length-1],st=mStatus(m);
  return `<button class="mrow${st.cls?" ms-"+st.cls:""}" data-mt="${esc(m.id)}"><span class="mic" style="color:${k.c}">${k.ic}</span><span class="mtx"><b>${esc(m.name)}</b><small>${esc(m.place||k.l)}${m.src&&m.src!=="eskuz"?" · "+esc(KSRC[m.src]||""):""}</small><small class="mst">${esc(st.txt)}</small></span><span class="mvl">${li?`<b>${nf(li.pd,1)}</b><small>${k.u}/egun</small>`:last?`<b>${nf(+last.v)}</b><small>${k.u}</small>`:`<small>—</small>`}</span></button>`}
 function drawKon(V){const G={};meters.slice().sort((a,b)=>(a.place||"").localeCompare(b.place||"","es")||(a.ord||0)-(b.ord||0)||a.name.localeCompare(b.name,"es")).forEach(m=>{(G[m.place||"Orokorra"]=G[m.place||"Orokorra"]||[]).push(m)});
- const mon=today.slice(0,7),tot={};meters.forEach(m=>{const v=mMonthly(m)[mon];if(v){const k=m.kind||"el";tot[k]=(tot[k]||0)+v}});
+ const mon=today.slice(0,7),tot={};meters.forEach(m=>{if(m.erol==="plakak"||m.erol==="isuria")return;const v=mMonthly(m)[mon];if(v){const k=m.kind||"el";tot[k]=(tot[k]||0)+v}});
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Kontsumoak</h2><button class="btn sm" id="kN">+ Kontagailua</button></div>
  <label class="konr">🔔 Kontagailuak irakurtzeko gogorarazi <select id="kRd"><option value="-1"${konOn()?"":" selected"}>Ez</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${konOn()&&konDay()===d?" selected":""}>${KWD[d]}</option>`).join("")}</select></label>
  ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).map(([k,v])=>`<div><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]}</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
  ${elecBlock()}
  ${solarBlock()}
  <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
+ ${combCards()}
  ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${L.map(meterCard).join("")}`).join(""):
  `<div class="empty"><p>Oraindik ez dago kontagailurik.<br>Gehitu argindarraren, uraren edo gasaren kontagailuak eta apuntatu irakurketak aldian behin (adib. astelehenero edo hilaren hasieran).</p><p class="note">App-ak kalkulatuko du zenbat kontsumitu den eta abisatuko dizu zerbait arraroa badago.</p></div>`}
  <div class="note" style="margin-top:14px">⚡ Laster: koadroetako Shelly neurgailuak.</div></div>`;
- $("kN").onclick=()=>editMeter();$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
+ $("kN").onclick=()=>editMeter();V.querySelectorAll("[data-cmb]").forEach(b=>b.onclick=()=>combSheet(b.dataset.cmb));$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
  V.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>meterSheet(meters.find(x=>x.id===b.dataset.mt)))}
 function saveMeter(m){const i=meters.findIndex(x=>x.id===m.id);if(i>=0)meters[i]=m;else meters.push(m);put("meters",m)}
 function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:"",price:"",src:"eskuz",reads:[],ord:meters.length+1};
@@ -652,10 +656,11 @@ function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:
  <label class="f">Eraikina / lekua<input id="mP" value="${esc(m.place||"")}" list="mPL" placeholder="Adib.: Salbatore Mitxelena, Ixpilla"><datalist id="mPL">${places.map(p=>`<option value="${esc(p)}">`).join("")}</datalist></label>
  <label class="f">Prezioa (€ unitateko, aukerakoa)<input id="mC" type="number" step="0.0001" min="0" value="${esc(m.price??"")}" placeholder="Adib.: 0,18"></label>
  <label class="f">Datuak nondik<select id="mS">${Object.entries(KSRC).map(([k,v])=>`<option value="${k}"${(m.src||"eskuz")===k?" selected":""}>${v}</option>`).join("")}</select></label>
+ <label class="f" id="mRw"${(m.kind||"el")==="el"?"":" hidden"}>Zer neurtzen du (argindarra)<select id="mR"><option value="">—</option>${Object.entries(EROL).map(([k,v])=>`<option value="${k}"${m.erol===k?" selected":""}>${v}</option>`).join("")}</select></label>
  <div class="note" id="mGn"${m.kind==="gasol"?"":" hidden"}>Gasolioan, apuntatu tangaren maila (litroak). Igotzen bada, betetzea dela ulertuko da.</div>
  <div class="acts">${n?"":`<button class="btn" id="mX" style="color:var(--urg)">Ezabatu</button>`}<span class="grow"></span><button class="btn" id="mCc">Utzi</button><button class="btn pri" id="mG">Gorde</button></div>`);
- setTimeout(()=>$("mN").focus(),0);$("mCc").onclick=close;$("mK").onchange=()=>$("mGn").hidden=$("mK").value!=="gasol";
- $("mG").onclick=()=>{const v=$("mN").value.trim();if(!v){$("mN").focus();return}m.name=v;m.kind=$("mK").value;m.place=$("mP").value.trim();m.price=$("mC").value===""?"":+$("mC").value;m.src=$("mS").value;saveMeter(m);if(n)meterSheet(m);else meterSheet(m)};
+ setTimeout(()=>$("mN").focus(),0);$("mCc").onclick=close;$("mK").onchange=()=>{$("mGn").hidden=$("mK").value!=="gasol";$("mRw").hidden=$("mK").value!=="el"};
+ $("mG").onclick=()=>{const v=$("mN").value.trim();if(!v){$("mN").focus();return}m.name=v;m.kind=$("mK").value;m.place=$("mP").value.trim();m.price=$("mC").value===""?"":+$("mC").value;m.src=$("mS").value;m.erol=m.kind==="el"?$("mR").value:"";saveMeter(m);if(n)meterSheet(m);else meterSheet(m)};
  const x=$("mX");if(x)x.onclick=()=>{if(x.dataset.a!=="1"){x.dataset.a="1";x.textContent="Benetan ezabatu?";return}meters=meters.filter(y=>y.id!==m.id);del("meters",m.id);close()}}
 function meterSheet(m){if(!m)return;m=meters.find(x=>x.id===m.id)||m;const k=kOf(m),R=mReads(m),I=mIntervals(m),li=I[I.length-1],st=mStatus(m),last=R[R.length-1];
  const pr=m.price!==""&&m.price!=null&&+m.price>0?+m.price:null;
@@ -686,6 +691,36 @@ function readSheet(m){const k=kOf(m),R=mReads(m),last=R[R.length-1];let photo=nu
   const r={d,v};
   if(photo&&AS){$("rdG").textContent="Igotzen…";try{const u=await AS.upload(photo,{type:photo.type||"image/jpeg"});r.photo=u.id}catch(e){toast("Ezin izan da argazkia igo")}}
   const x=cl(m);x.reads=[...mReads(x).filter(y=>y.d!==d),r];saveMeter(x);toast("Irakurketa gordeta");meterSheet(x)}}
+
+/* ---------- kontsumo erreala (sarea + plakak − isuria) ---------- */
+const EROL={sarea:"🔌 Saretik erosia (orokorra 1.18.0)",plakak:"☀️ Plaken ekoizpena (plaken kontagailua 1.28.0)",isuria:"↗ Sarera isuria (orokorra 1.28.0)",beste:"Beste bat"};
+function mDaily(m){const D={};mIntervals(m).forEach(x=>{if(x.neg)return;let d=new Date(x.a+"T00:00");for(let k=0;k<x.days;k++){d.setDate(d.getDate()+1);const key=iso(d);D[key]=(D[key]||0)+x.pd}});return D}
+function combFor(place){const M=meters.filter(m=>m.kind==="el"&&(m.place||"")===(place||"")&&m.erol&&m.erol!=="beste");
+ const G=M.filter(m=>m.erol==="sarea"),P=M.filter(m=>m.erol==="plakak"),X=M.filter(m=>m.erol==="isuria");if(!G.length||!P.length)return null;
+ const add=(L)=>{const o={};L.forEach(m=>Object.entries(mDaily(m)).forEach(([d,v])=>o[d]=(o[d]||0)+v));return o};
+ const g=add(G),p=add(P),x=add(X);
+ // egun komunak bakarrik (bi kontagailuen datuak dauden egunak)
+ const days=Object.keys(g).filter(d=>d in p).sort();
+ return{days,g,p,x,G,P,X}}
+const wkStart=d=>{const t=new Date(d+"T00:00"),w=(t.getDay()+6)%7;t.setDate(t.getDate()-w);return iso(t)};
+function combAgg(c,keyFn){const A={};c.days.forEach(d=>{const k=keyFn(d),o=A[k]=A[k]||{g:0,p:0,x:0,n:0};o.g+=c.g[d]||0;o.p+=c.p[d]||0;o.x+=c.x[d]||0;o.n++});
+ return Object.entries(A).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,o])=>({k,...o,real:o.g+o.p-o.x,self:o.p-o.x}))}
+function combChart(rows,lbl){if(!rows.length)return "";const mx=Math.max(1,...rows.map(r=>r.real)),W=330,H=120,n=rows.length,bw=W/n;
+ let s=`<svg viewBox="0 0 ${W} ${H+22}" width="100%" role="img" aria-label="Kontsumo erreala">`;
+ rows.forEach((r,i)=>{const x=i*bw,hg=r.g/mx*H*0.9,hs=Math.max(0,r.self)/mx*H*0.9;
+  s+=`<rect x="${x+3}" y="${H-hg}" width="${bw-6}" height="${hg}" rx="2" fill="#ffb627"><title>Saretik: ${nf(r.g)} kWh</title></rect><rect x="${x+3}" y="${H-hg-hs}" width="${bw-6}" height="${hs}" rx="2" fill="#3ddc97"><title>Plaketatik: ${nf(r.self)} kWh</title></rect>`;
+  s+=`<text x="${x+bw/2}" y="${H+14}" fill="var(--mute)" font-size="9" text-anchor="middle">${lbl(r.k)}</text>`});
+ return s+`</svg><div class="lgd"><span><i style="background:#ffb627"></i>Saretik erosia</span><span><i style="background:#3ddc97"></i>Plaketatik (bertan kontsumitua)</span></div>`}
+function combCards(){const places=[...new Set(meters.filter(m=>m.kind==="el"&&m.erol).map(m=>m.place||""))];
+ return places.map(pl=>{const c=combFor(pl);if(!c)return "";const W=combAgg(c,wkStart),last=W[W.length-1];
+  if(!last)return `<div class="cmb"><b>⚡ Kontsumo erreala${pl?" · "+esc(pl):""}</b><div class="note" style="margin:4px 0 0">Bi kontagailuen gutxienez bi irakurketa behar dira (egun berean hobeto).</div></div>`;
+  const pct=last.real>0?Math.round(last.self/last.real*100):0;
+  return `<button class="cmb" data-cmb="${esc(pl)}"><b>⚡ Kontsumo erreala${pl?" · "+esc(pl):""}</b><span class="cmv"><span><small>Aste honetan${last.n<7?" ("+last.n+" egun)":""}</small><b>${nf(last.real)} kWh</b></span><span><small>Saretik</small><b>${nf(last.g)}</b></span><span><small>Plakak</small><b style="color:var(--ok)">%${pct}</b></span></span></button>`}).join("")}
+function combSheet(pl){const c=combFor(pl);if(!c)return;const W=combAgg(c,wkStart).slice(-10),M=combAgg(c,d=>d.slice(0,7)).slice(-12),pr=meters.find(m=>m.erol==="sarea"&&(m.place||"")===pl&&+m.price>0);
+ sheet(`<h3>⚡ Kontsumo erreala${pl?" · "+esc(pl):""}</h3><div class="note">Kontsumo erreala = saretik erosia + plaken ekoizpena${c.X.length?" − sarera isuria":""}. Irakurketen arteko egunetan berdin banatuta.</div>
+ <div class="card2"><b>Asteak</b>${combChart(W,k=>+k.slice(8)+"/"+(+k.slice(5,7)))}</div>
+ <div class="card2"><b>Hilabeteak</b><div class="ctab"><div class="cth"><span>Hila</span><span>Erreala</span><span>Saretik</span><span>Plakak</span><span>%</span></div>${M.slice().reverse().map(r=>`<div><span>${HIL3[+r.k.slice(5)-1].replace(".","")} ${r.k.slice(2,4)}</span><span><b>${nf(r.real)}</b></span><span>${nf(r.g)}</span><span>${nf(r.p)}</span><span style="color:var(--ok)">${r.real>0?Math.round(r.self/r.real*100):0}</span></div>`).join("")}</div><div class="note" style="margin:6px 0 0">kWh${pr?` · saretik erosiaren kostua ≈ prezioa × kWh (${nf(+pr.price,3)} €/kWh)`:""}</div></div>
+ <div class="acts"><span class="grow"></span><button class="btn" id="cbZ">Itxi</button></div>`);$("sheet").scrollTop=0;$("cbZ").onclick=close}
 
 /* ---------- langileak ---------- */
 let sq="";
