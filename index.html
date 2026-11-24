@@ -636,17 +636,19 @@ function mChart(m){const M=mMonthly(m),k=kOf(m),now=new Date(today+"T00:00"),key
   s+=`<text x="${X+bw/2}" y="${H+13}" fill="var(--mute)" font-size="9" text-anchor="middle">${HIL3[+x.slice(5)-1].replace(".","")}</text>`});
  return s+`</svg><div class="lgd"><span><i style="background:#4b5d7a"></i>Urtebete lehenago</span><span><i style="background:${k.c}"></i>Azken 12 hilabeteak</span></div>`}
 function meterCard(m){const k=kOf(m),R=mReads(m),last=R[R.length-1],I=mIntervals(m),li=I[I.length-1],st=mStatus(m);
- return `<button class="mrow${st.cls?" ms-"+st.cls:""}" data-mt="${esc(m.id)}"><span class="mic" style="color:${k.c}">${k.ic}</span><span class="mtx"><b>${esc(m.name)}</b><small>${esc(m.place||k.l)}${m.src&&m.src!=="eskuz"?" · "+esc(KSRC[m.src]||""):""}</small><small class="mst">${esc(st.txt)}</small></span><span class="mvl">${li?`<b>${nf(li.pd,1)}</b><small>${k.u}/egun</small>`:last?`<b>${nf(+last.v)}</b><small>${k.u}</small>`:`<small>—</small>`}</span></button>`}
+ const par=m.parent&&meters.find(x=>x.id===m.parent);
+ return `<button class="mrow${st.cls?" ms-"+st.cls:""}" data-mt="${esc(m.id)}"${par?' style="margin-left:22px;width:calc(100% - 22px)"':""}><span class="mic" style="color:${k.c}">${k.ic}</span><span class="mtx"><b>${esc(m.name)}</b>${par?`<small>↳ ${esc(par.name)}-ren barruan (ez da batzen)</small>`:""}<small>${esc(m.place||k.l)}${m.src&&m.src!=="eskuz"?" · "+esc(KSRC[m.src]||""):""}</small><small class="mst">${esc(st.txt)}</small></span><span class="mvl">${li?`<b>${nf(li.pd,1)}</b><small>${k.u}/egun</small>`:last?`<b>${nf(+last.v)}</b><small>${k.u}</small>`:`<small>—</small>`}</span></button>`}
 const KORD=["el","ur","gas","gasol"],kRank=k=>{const i=KORD.indexOf(k||"el");return i<0?9:i},rRank=r=>({sarea:0,plakak:1,isuria:2}[r]??3);
+function subOrd(L){const ids=new Set(L.map(m=>m.id)),out=[],add=m=>{out.push(m);L.filter(c=>c.parent===m.id&&c.id!==m.id).forEach(add)};L.filter(m=>!m.parent||!ids.has(m.parent)).forEach(add);return out}
 function drawKon(V){const G={};meters.slice().sort((a,b)=>kRank(a.kind)-kRank(b.kind)||(a.place||"").localeCompare(b.place||"","es")||rRank(a.erol)-rRank(b.erol)||(a.ord||0)-(b.ord||0)||a.name.localeCompare(b.name,"es")).forEach(m=>{const k=KIND[m.kind]?m.kind:"el",g=KIND[k].ic+" "+KIND[k].l;(G[g]=G[g]||[]).push(m)});
- const mon=today.slice(0,7),tot={};meters.forEach(m=>{if(m.erol==="plakak"||m.erol==="isuria")return;const v=mMonthly(m)[mon];if(v){const k=m.kind||"el";tot[k]=(tot[k]||0)+v}});
+ const mon=today.slice(0,7),tot={};meters.forEach(m=>{if(m.erol==="plakak"||m.erol==="isuria"||m.parent)return;const v=mMonthly(m)[mon];if(v){const k=m.kind||"el";tot[k]=(tot[k]||0)+v}});
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Kontsumoak</h2><button class="btn sm" id="kN">+ Kontagailua</button></div>
  <label class="konr">🔔 Kontagailuak irakurtzeko gogorarazi <select id="kRd"><option value="-1"${konOn()?"":" selected"}>Ez</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${konOn()&&konDay()===d?" selected":""}>${KWD[d]}</option>`).join("")}</select></label>
  ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).sort((a,b)=>kRank(a[0])-kRank(b[0])).map(([k,v])=>`<div><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]}</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
  ${solarBlock()}
  <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
  ${combCards()}
- ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${L.map(meterCard).join("")}`).join(""):
+ ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${subOrd(L).map(meterCard).join("")}`).join(""):
  `<div class="empty"><p>Oraindik ez dago kontagailurik.<br>Gehitu argindarraren, uraren edo gasaren kontagailuak eta apuntatu irakurketak aldian behin (adib. astelehenero edo hilaren hasieran).</p><p class="note">App-ak kalkulatuko du zenbat kontsumitu den eta abisatuko dizu zerbait arraroa badago.</p></div>`}
  <div class="note" style="margin-top:14px">⚡ Laster: koadroetako Shelly neurgailuak.</div></div>`;
  $("kN").onclick=()=>editMeter();V.querySelectorAll("[data-cmb]").forEach(b=>b.onclick=()=>combSheet(b.dataset.cmb));$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
@@ -660,16 +662,22 @@ function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:
  <label class="f">Eraikina / lekua<input id="mP" value="${esc(m.place||"")}" list="mPL" placeholder="Adib.: Salbatore Mitxelena, Ixpilla"><datalist id="mPL">${places.map(p=>`<option value="${esc(p)}">`).join("")}</datalist></label>
  <label class="f">Prezioa (€ unitateko, aukerakoa)<input id="mC" type="number" step="0.0001" min="0" value="${esc(m.price??"")}" placeholder="Adib.: 0,18"></label>
  <label class="f">Datuak nondik<select id="mS">${Object.entries(KSRC).map(([k,v])=>`<option value="${k}"${(m.src||"eskuz")===k?" selected":""}>${v}</option>`).join("")}</select></label>
+ <label class="f">Beste kontagailu baten barruan dago? (azpikontagailua: bere kontsumoa nagusian sartzen da, ez da batuko)<select id="mPa"></select></label>
  <label class="f" id="mRw"${(m.kind||"el")==="el"?"":" hidden"}>Zer neurtzen du (argindarra)<select id="mR"><option value="">—</option>${Object.entries(EROL).map(([k,v])=>`<option value="${k}"${m.erol===k?" selected":""}>${v}</option>`).join("")}</select></label>
  <div class="note" id="mGn"${m.kind==="gasol"?"":" hidden"}>Gasolioan, apuntatu tangaren maila (litroak). Igotzen bada, betetzea dela ulertuko da.</div>
  <div class="acts">${n?"":`<button class="btn" id="mX" style="color:var(--urg)">Ezabatu</button>`}<span class="grow"></span><button class="btn" id="mCc">Utzi</button><button class="btn pri" id="mG">Gorde</button></div>`);
- setTimeout(()=>$("mN").focus(),0);$("mCc").onclick=close;$("mK").onchange=()=>{$("mGn").hidden=$("mK").value!=="gasol";$("mRw").hidden=$("mK").value!=="el"};
- $("mG").onclick=()=>{const v=$("mN").value.trim();if(!v){$("mN").focus();return}m.name=v;m.kind=$("mK").value;m.place=$("mP").value.trim();m.price=$("mC").value===""?"":+$("mC").value;m.src=$("mS").value;m.erol=m.kind==="el"?$("mR").value:"";saveMeter(m);if(n)meterSheet(m);else meterSheet(m)};
+ setTimeout(()=>$("mN").focus(),0);$("mCc").onclick=close;
+ const paOpts=()=>{const kk=$("mK").value,cur=$("mPa").value||m.parent||"";$("mPa").innerHTML=`<option value="">Ez, kontagailu nagusia da</option>`+meters.filter(x=>x.id!==m.id&&(x.kind||"el")===kk&&x.parent!==m.id).map(x=>`<option value="${esc(x.id)}"${cur===x.id?" selected":""}>↳ ${esc(x.name)}${x.place?" · "+esc(x.place):""}</option>`).join("")};paOpts();
+ $("mK").onchange=()=>{$("mGn").hidden=$("mK").value!=="gasol";$("mRw").hidden=$("mK").value!=="el";paOpts()};
+ $("mG").onclick=()=>{const v=$("mN").value.trim();if(!v){$("mN").focus();return}m.name=v;m.kind=$("mK").value;m.place=$("mP").value.trim();m.price=$("mC").value===""?"":+$("mC").value;m.src=$("mS").value;m.erol=m.kind==="el"?$("mR").value:"";m.parent=$("mPa").value||"";saveMeter(m);if(n)meterSheet(m);else meterSheet(m)};
  const x=$("mX");if(x)x.onclick=()=>{if(x.dataset.a!=="1"){x.dataset.a="1";x.textContent="Benetan ezabatu?";return}meters=meters.filter(y=>y.id!==m.id);del("meters",m.id);close()}}
 function meterSheet(m){if(!m)return;m=meters.find(x=>x.id===m.id)||m;const k=kOf(m),R=mReads(m),I=mIntervals(m),li=I[I.length-1],st=mStatus(m),last=R[R.length-1];
  const pr=m.price!==""&&m.price!=null&&+m.price>0?+m.price:null;
  const month=mMonthly(m)[today.slice(0,7)]||0;
- sheet(`<h3><span style="color:${k.c}">${k.ic}</span> ${esc(m.name)}</h3><div class="note">${esc(m.place||"")}${m.place?" · ":""}${k.l} · ${esc(KSRC[m.src||"eskuz"]||"")}</div>
+ const par=m.parent&&meters.find(x=>x.id===m.parent);let shr="";if(par){const a=mDaily(m),b=mDaily(par),ds=Object.keys(a).filter(d=>d in b).sort().slice(-60),sa=ds.reduce((s,d)=>s+a[d],0),sb=ds.reduce((s,d)=>s+b[d],0);
+  shr=`<div class="note" style="margin:4px 0 8px">↳ <b>${esc(par.name)}</b>-ren barruan dago: bere kontsumoa nagusian sartuta dago, ez da totaletan batzen.${sb>0&&ds.length>=3?` Azken ${ds.length} egunetan nagusiaren <b>%${Math.round(sa/sb*100)}</b> izan da (${nf(sa)} / ${nf(sb)} ${k.u}).`:" Bi kontagailuen irakurketak garai berean dituzunean, nagusiaren zein ehuneko den kalkulatuko dut."}</div>`}
+ const kids=meters.filter(x=>x.parent===m.id);if(kids.length){const b=mDaily(m);shr+=`<div class="note" style="margin:4px 0 8px">Barruan: ${kids.map(c=>{const a=mDaily(c),ds=Object.keys(a).filter(d=>d in b).sort().slice(-60),sa=ds.reduce((s,d)=>s+a[d],0),sb=ds.reduce((s,d)=>s+b[d],0);return `<b>${esc(c.name)}</b>${sb>0&&ds.length>=3?" %"+Math.round(sa/sb*100):""}`}).join(" · ")}</div>`}
+ sheet(`<h3><span style="color:${k.c}">${k.ic}</span> ${esc(m.name)}</h3><div class="note">${esc(m.place||"")}${m.place?" · ":""}${k.l} · ${esc(KSRC[m.src||"eskuz"]||"")}</div>${shr}
  ${st.cls?`<div class="mbar ms-${st.cls}">${esc(st.txt)}</div>`:""}
  <div class="kp"><div><small>Azken irakurketa</small><b>${last?nf(+last.v):"—"}</b><small>${last?fmtY(last.d):""}</small></div><div><small>Egunean</small><b>${li?nf(li.pd,1):"—"}</b><small>${k.u}/egun</small></div><div><small>Hilabete honetan</small><b>${month?nf(month):"—"}</b><small>${k.u}${pr&&month?" · ~"+nf(month*pr)+" €":""}</small></div></div>
  <button class="btn pri" id="rdN" style="width:100%">+ Irakurketa berria</button>
@@ -700,7 +708,7 @@ function readSheet(m){const k=kOf(m),R=mReads(m),last=R[R.length-1];let photo=nu
 const EROL={sarea:"🔌 Saretik erosia (orokorra 1.18.0)",plakak:"☀️ Plaken ekoizpena (plaken kontagailua 1.28.0)",isuria:"↗ Sarera isuria (orokorra 1.28.0)",beste:"Beste bat"};
 function mDaily(m){const D={};mIntervals(m).forEach(x=>{if(x.neg)return;let d=new Date(x.a+"T00:00");for(let k=0;k<x.days;k++){d.setDate(d.getDate()+1);const key=iso(d);D[key]=(D[key]||0)+x.pd}});return D}
 const mDayRole=(r,d)=>meters.filter(m=>m.kind==="el"&&m.erol===r).reduce((a,m)=>a+(mDaily(m)[d]||0),0);
-function combFor(place){const M=meters.filter(m=>m.kind==="el"&&(m.place||"")===(place||"")&&m.erol&&m.erol!=="beste");
+function combFor(place){const M=meters.filter(m=>m.kind==="el"&&!m.parent&&(m.place||"")===(place||"")&&m.erol&&m.erol!=="beste");
  const G=M.filter(m=>m.erol==="sarea"),P=M.filter(m=>m.erol==="plakak"),X=M.filter(m=>m.erol==="isuria"),fs=SOLAR.length>0;if(!G.length||(!P.length&&!fs))return null;
  const add=(L)=>{const o={};L.forEach(m=>Object.entries(mDaily(m)).forEach(([d,v])=>o[d]=(o[d]||0)+v));return o};
  const g=add(G),x=add(X),p=fs?(()=>{const o={};SOLAR.forEach(e=>{if(e.d)o[e.d]=(o[e.d]||0)+soPV(e)});return o})():add(P);
