@@ -591,14 +591,14 @@ function bindSolar(V){V.querySelectorAll("[data-soc]").forEach(b=>b.onclick=()=>
  const r=V.querySelector("#soR");if(r)r.onclick=()=>{sheet(`<h3>⟳ FusionSolar</h3><div class="note">FusionSolar-etik datuak orain ekartzeko eskatuko da (Firebase-ko funtzioa instalatuta egon behar du). 1–3 minutu behar ditu.</div><label class="f">📅 Noiztik ekarri historikoa (aukerakoa; 12 hilabete arte aldi bakoitzean)</label><div style="display:flex;gap:8px"><select id="soFy" style="flex:1"><option value="">Urtea —</option>${[0,1,2,3,4,5].map(i=>+today.slice(0,4)-i).map(y=>`<option${String(FSCFG.backfillFrom||"").startsWith(y)?" selected":""}>${y}</option>`).join("")}</select><select id="soFm" style="flex:1.4">${HIL.map((m,i)=>`<option value="${pad(i+1)}"${String(FSCFG.backfillFrom||"").slice(5,7)===pad(i+1)?" selected":""}>${m}</option>`).join("")}</select></div><label style="display:none"></label><div class="acts"><span class="grow"></span><button class="btn" id="soRc">Utzi</button><button class="btn pri" id="soRg">Eskatu</button></div>`);
   $("soRc").onclick=close;$("soRg").onclick=()=>{const v=$("soFy").value?$("soFy").value+"-"+$("soFm").value:"";const p={runNow:Date.now()};if(v)p.backfillFrom=v;saveFSCFG(p);toast("Eskatuta. Datuak laster agertuko dira.");close()}}}
 function solarSheet(c,d){const D=soDays(c);if(!D.length)return;d=d&&D.some(e=>e.d===d)?d:D[D.length-1].d;const i=D.findIndex(e=>e.d===d),e=D[i],v=soPV(e),ym=d.slice(0,7),pym=(+ym.slice(0,4)-1)+ym.slice(4),mt=soMonth(c,ym),pmt=soMonth(c,pym);
- const grid=elCups().map(cc=>elDays(cc).find(x=>x.d===d)).filter(Boolean).reduce((a,x)=>a+elSum(x),0);
+ const dd=elCups().map(cc=>elDays(cc).find(x=>x.d===d)).filter(Boolean).reduce((a,x)=>a+elSum(x),0),grid=dd||mDayRole("sarea",d),exp=mDayRole("isuria",d),real=grid+v-exp,ap=dd?"":"≈ ";
  sheet(`<h3>☀️ ${esc(soName(c))}</h3><div class="note">FusionSolar · ${esc(c)}</div>
  <div class="dnav"><button class="btn sm" id="soP"${i>0?"":" disabled"}>‹</button><b>${["Igandea","Astelehena","Asteartea","Asteazkena","Osteguna","Ostirala","Larunbata"][new Date(d+"T00:00").getDay()]}, ${fmtY(d)}</b><button class="btn sm" id="soN"${i<D.length-1?"":" disabled"}>›</button></div>
- <div class="kp"><div><small>Ekoiztuta</small><b>${nf(v)} kWh</b></div>${grid?`<div><small>Saretik erosia</small><b>${nf(grid)} kWh</b></div><div><small>Kontsumo erreala</small><b>${nf(grid+v)} kWh</b><small>plakak: %${Math.round(v/(grid+v)*100)}</small></div>`:`<div><small>${HIL[+ym.slice(5)-1]}</small><b>${nf(mt)} kWh</b></div>`}</div>
+ <div class="kp"><div><small>Ekoiztuta</small><b>${nf(v)} kWh</b></div>${grid?`<div><small>Saretik erosia</small><b>${ap}${nf(grid)} kWh</b></div><div><small>Kontsumo erreala</small><b>${ap}${nf(real)} kWh</b><small>plakak: %${real>0?Math.round((v-exp)/real*100):0}${exp?" · isuria "+nf(exp):""}</small></div>`:`<div><small>${HIL[+ym.slice(5)-1]}</small><b>${nf(mt)} kWh</b></div>`}</div>
  <div class="card2"><b>Ordutik ordura</b>${soHourChart(e)}</div>
  <div class="card2"><b>Azken 30 egunak</b><div class="note" style="margin:0">Sakatu egun bat ikusteko</div>${soDayBars(c,D[D.length-1].d)}</div>
  <div class="card2"><div class="dd"><span>${HIL[+ym.slice(5)-1]} ${ym.slice(0,4)}</span><b>${nf(mt)} kWh</b></div><div class="dd"><span>Iaz hilabete berean</span><b>${pmt?nf(pmt)+" kWh":"—"}</b></div></div>
- ${grid?"":`<div class="note">Saretik erositakoa ere ikusteko, Datadis edo kontagailu orokorraren datuak behar dira (Argindarra).</div>`}
+ ${grid?"":`<div class="note">Kontsumo erreala ikusteko, apuntatu kontagailu orokorraren irakurketak Kontsumoak-en: 1.18.0 (rola: saretik erosia) eta 1.28.0 (rola: sarera isuria).</div>`}
  <div class="acts"><span class="grow"></span><button class="btn" id="soZ">Itxi</button></div>`);
  $("sheet").scrollTop=0;$("soZ").onclick=close;$("soP").onclick=()=>solarSheet(c,D[i-1].d);$("soN").onclick=()=>solarSheet(c,D[i+1].d);
  document.querySelectorAll("[data-sod]").forEach(r=>{r.style.cursor="pointer";r.addEventListener("click",()=>solarSheet(c,r.dataset.sod))})}
@@ -643,7 +643,6 @@ function drawKon(V){const G={};meters.slice().sort((a,b)=>kRank(a.kind)-kRank(b.
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Kontsumoak</h2><button class="btn sm" id="kN">+ Kontagailua</button></div>
  <label class="konr">🔔 Kontagailuak irakurtzeko gogorarazi <select id="kRd"><option value="-1"${konOn()?"":" selected"}>Ez</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${konOn()&&konDay()===d?" selected":""}>${KWD[d]}</option>`).join("")}</select></label>
  ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).sort((a,b)=>kRank(a[0])-kRank(b[0])).map(([k,v])=>`<div><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]}</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
- ${elecBlock()}
  ${solarBlock()}
  <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
  ${combCards()}
@@ -700,13 +699,14 @@ function readSheet(m){const k=kOf(m),R=mReads(m),last=R[R.length-1];let photo=nu
 /* ---------- kontsumo erreala (sarea + plakak − isuria) ---------- */
 const EROL={sarea:"🔌 Saretik erosia (orokorra 1.18.0)",plakak:"☀️ Plaken ekoizpena (plaken kontagailua 1.28.0)",isuria:"↗ Sarera isuria (orokorra 1.28.0)",beste:"Beste bat"};
 function mDaily(m){const D={};mIntervals(m).forEach(x=>{if(x.neg)return;let d=new Date(x.a+"T00:00");for(let k=0;k<x.days;k++){d.setDate(d.getDate()+1);const key=iso(d);D[key]=(D[key]||0)+x.pd}});return D}
+const mDayRole=(r,d)=>meters.filter(m=>m.kind==="el"&&m.erol===r).reduce((a,m)=>a+(mDaily(m)[d]||0),0);
 function combFor(place){const M=meters.filter(m=>m.kind==="el"&&(m.place||"")===(place||"")&&m.erol&&m.erol!=="beste");
- const G=M.filter(m=>m.erol==="sarea"),P=M.filter(m=>m.erol==="plakak"),X=M.filter(m=>m.erol==="isuria");if(!G.length||!P.length)return null;
+ const G=M.filter(m=>m.erol==="sarea"),P=M.filter(m=>m.erol==="plakak"),X=M.filter(m=>m.erol==="isuria"),fs=!P.length&&SOLAR.length>0;if(!G.length||(!P.length&&!fs))return null;
  const add=(L)=>{const o={};L.forEach(m=>Object.entries(mDaily(m)).forEach(([d,v])=>o[d]=(o[d]||0)+v));return o};
- const g=add(G),p=add(P),x=add(X);
+ const g=add(G),x=add(X),p=fs?(()=>{const o={};SOLAR.forEach(e=>{if(e.d)o[e.d]=(o[e.d]||0)+soPV(e)});return o})():add(P);
  // egun komunak bakarrik (bi kontagailuen datuak dauden egunak)
  const days=Object.keys(g).filter(d=>d in p).sort();
- return{days,g,p,x,G,P,X}}
+ return{days,g,p,x,G,P,X,fs}}
 const wkStart=d=>{const t=new Date(d+"T00:00"),w=(t.getDay()+6)%7;t.setDate(t.getDate()-w);return iso(t)};
 function combAgg(c,keyFn){const A={};c.days.forEach(d=>{const k=keyFn(d),o=A[k]=A[k]||{g:0,p:0,x:0,n:0};o.g+=c.g[d]||0;o.p+=c.p[d]||0;o.x+=c.x[d]||0;o.n++});
  return Object.entries(A).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,o])=>({k,...o,real:o.g+o.p-o.x,self:o.p-o.x}))}
@@ -722,7 +722,7 @@ function combCards(){const places=[...new Set(meters.filter(m=>m.kind==="el"&&m.
   const pct=last.real>0?Math.round(last.self/last.real*100):0;
   return `<button class="cmb" data-cmb="${esc(pl)}"><b>⚡ Kontsumo erreala${pl?" · "+esc(pl):""}</b><span class="cmv"><span><small>Aste honetan${last.n<7?" ("+last.n+" egun)":""}</small><b>${nf(last.real)} kWh</b></span><span><small>Saretik</small><b>${nf(last.g)}</b></span><span><small>Plakak</small><b style="color:var(--ok)">%${pct}</b></span></span></button>`}).join("")}
 function combSheet(pl){const c=combFor(pl);if(!c)return;const W=combAgg(c,wkStart).slice(-10),M=combAgg(c,d=>d.slice(0,7)).slice(-12),pr=meters.find(m=>m.erol==="sarea"&&(m.place||"")===pl&&+m.price>0);
- sheet(`<h3>⚡ Kontsumo erreala${pl?" · "+esc(pl):""}</h3><div class="note">Kontsumo erreala = saretik erosia + plaken ekoizpena${c.X.length?" − sarera isuria":""}. Irakurketen arteko egunetan berdin banatuta.</div>
+ sheet(`<h3>⚡ Kontsumo erreala${pl?" · "+esc(pl):""}</h3><div class="note">Kontsumo erreala = saretik erosia + plaken ekoizpena${c.fs?" (FusionSolar)":""}${c.X.length?" − sarera isuria":""}. Irakurketen arteko egunetan berdin banatuta.</div>
  <div class="card2"><b>Asteak</b>${combChart(W,k=>+k.slice(8)+"/"+(+k.slice(5,7)))}</div>
  <div class="card2"><b>Hilabeteak</b><div class="ctab"><div class="cth"><span>Hila</span><span>Erreala</span><span>Saretik</span><span>Plakak</span><span>%</span></div>${M.slice().reverse().map(r=>`<div><span>${HIL3[+r.k.slice(5)-1].replace(".","")} ${r.k.slice(2,4)}</span><span><b>${nf(r.real)}</b></span><span>${nf(r.g)}</span><span>${nf(r.p)}</span><span style="color:var(--ok)">${r.real>0?Math.round(r.self/r.real*100):0}</span></div>`).join("")}</div><div class="note" style="margin:6px 0 0">kWh${pr?` · saretik erosiaren kostua ≈ prezioa × kWh (${nf(+pr.price,3)} €/kWh)`:""}</div></div>
  <div class="acts"><span class="grow"></span><button class="btn" id="cbZ">Itxi</button></div>`);$("sheet").scrollTop=0;$("cbZ").onclick=close}
