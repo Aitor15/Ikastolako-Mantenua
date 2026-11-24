@@ -625,7 +625,7 @@ function mStatus(m){const I=mIntervals(m).filter(x=>!x.refill&&!x.neg),R=mReads(
  return{cls:"rg",txt:r<0.9?`Ohikoa baino %${Math.round((1-r)*100)} gutxiago`:"Ohiko kontsumoa"}}
 /* hilabeteka banatu (egun bakoitzari berdin) */
 function mMonthly(m){const M={};mIntervals(m).forEach(x=>{if(x.neg)return;let d=new Date(x.a+"T00:00");for(let k=0;k<x.days;k++){d.setDate(d.getDate()+1);const key=d.getFullYear()+"-"+pad(d.getMonth()+1);M[key]=(M[key]||0)+x.pd}});return M}
-function mChart(m){const M=mMonthly(m),k=kOf(m),now=new Date(today+"T00:00"),keys=[];for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);keys.push(d.getFullYear()+"-"+pad(d.getMonth()+1))}
+function mChart(m,MM,kk){const M=MM||mMonthly(m),k=kk||kOf(m),now=new Date(today+"T00:00"),keys=[];for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);keys.push(d.getFullYear()+"-"+pad(d.getMonth()+1))}
  const prevK=x=>(+x.slice(0,4)-1)+x.slice(4),vals=keys.map(x=>M[x]||0),pv=keys.map(x=>M[prevK(x)]||0),mx=Math.max(1,...vals,...pv);
  if(!vals.some(v=>v>0))return `<div class="note">Gutxienez bi irakurketa behar dira grafikoa ikusteko.</div>`;
  const W=330,H=130,bw=W/12;let s=`<svg viewBox="0 0 ${W} ${H+30}" width="100%" role="img" aria-label="Hileko kontsumoa">`;
@@ -639,19 +639,30 @@ function meterCard(m){const k=kOf(m),R=mReads(m),last=R[R.length-1],I=mIntervals
  const par=m.parent&&meters.find(x=>x.id===m.parent);
  return `<button class="mrow${st.cls?" ms-"+st.cls:""}" data-mt="${esc(m.id)}"${par?' style="margin-left:22px;width:calc(100% - 22px)"':""}><span class="mic" style="color:${k.c}">${k.ic}</span><span class="mtx"><b>${esc(m.name)}</b>${par?`<small>↳ ${esc(par.name)}-ren barruan (ez da batzen)</small>`:""}<small>${esc(m.place||k.l)}${m.src&&m.src!=="eskuz"?" · "+esc(KSRC[m.src]||""):""}</small><small class="mst">${esc(st.txt)}</small></span><span class="mvl">${li?`<b>${nf(li.pd,1)}</b><small>${k.u}/egun</small>`:last?`<b>${nf(+last.v)}</b><small>${k.u}</small>`:`<small>—</small>`}</span></button>`}
 const KORD=["el","ur","gas","gasol"],kRank=k=>{const i=KORD.indexOf(k||"el");return i<0?9:i},rRank=r=>({sarea:0,plakak:1,isuria:2}[r]??3);
+// Mota bakoitzeko guztizkoa hilabeteka (kontagailu nagusiak bakarrik; azpikontagailuak eta plakak/isuria kanpo)
+const totMains=k=>meters.filter(m=>(KIND[m.kind]?m.kind:"el")===k&&!m.parent&&m.erol!=="plakak"&&m.erol!=="isuria");
+function totMonthly(k){const T={};totMains(k).forEach(m=>Object.entries(mMonthly(m)).forEach(([ym,v])=>T[ym]=(T[ym]||0)+v));return T}
+function totSheet(k){const K=KIND[k],T=totMonthly(k),L=totMains(k),subs=meters.filter(m=>(KIND[m.kind]?m.kind:"el")===k&&m.parent),mon=today.slice(0,7),prevK=x=>(+x.slice(0,4)-1)+x.slice(4);
+ let real=null;if(k==="el"&&SOLAR.length){const X={};meters.filter(m=>m.kind==="el"&&!m.parent&&m.erol==="isuria").forEach(m=>Object.entries(mMonthly(m)).forEach(([ym,v])=>X[ym]=(X[ym]||0)+v));const P={};SOLAR.forEach(e=>{if(e.d){const ym=e.d.slice(0,7);P[ym]=(P[ym]||0)+soPV(e)}});real={};Object.keys(T).forEach(ym=>{if(P[ym]!=null)real[ym]={r:T[ym]+P[ym]-(X[ym]||0),p:P[ym]}})}
+ const rows=Object.keys(T).filter(ym=>ym<=mon).sort().reverse().slice(0,24);
+ sheet(`<h3>${K.ic} ${K.l} · guztira</h3><div class="note">${L.length} kontagailu nagusiren batura${subs.length?` (${subs.length} azpikontagailu ez dira batzen, nagusian sartuta daudelako)`:""}${k==="el"?". Argindarrean: saretik erosia"+(real?"; «Erreala» = erosia + plakak (FusionSolar) − isuria":""):""}.</div>
+ <div class="card2"><b>Azken 12 hilabeteak</b>${mChart(null,T,K)}</div>
+ <div class="card2"><b>${HIL[+mon.slice(5)-1]}</b>${L.map(m=>`<div class="dd"><span>${esc(m.name)}${m.place?` <small style="color:var(--mute)">· ${esc(m.place)}</small>`:""}</span><b>${nf(mMonthly(m)[mon]||0)} ${K.u}</b></div>`).join("")}<div class="dd" style="border-top:1px solid var(--line);margin-top:4px;padding-top:6px"><span><b>Guztira</b></span><b>${nf(T[mon]||0)} ${K.u}</b></div>${subs.map(m=>`<div class="dd" style="opacity:.7"><span>↳ ${esc(m.name)} <small>(barruan)</small></span><span>${nf(mMonthly(m)[mon]||0)} ${K.u}</span></div>`).join("")}</div>
+ <div class="card2"><b>Hilabeteak</b><div class="ctab"><div class="cth"><span>Hila</span><span>Guztira</span><span>Iaz</span><span>Aldea</span>${real?"<span>Erreala</span>":""}</div>${rows.map(ym=>{const v=T[ym],p=T[prevK(ym)],dif=p?Math.round((v-p)/p*100):null;return `<div><span>${HIL3[+ym.slice(5)-1].replace(".","")} ${ym.slice(2,4)}</span><span><b>${nf(v)}</b></span><span>${p?nf(p):"—"}</span><span style="color:${dif==null?"var(--mute)":dif>5?"var(--urg)":dif<-5?"var(--ok)":"var(--mute)"}">${dif==null?"—":(dif>0?"+":"")+dif+"%"}</span>${real?`<span>${real[ym]?nf(real[ym].r):"—"}</span>`:""}</div>`}).join("")}</div><div class="note" style="margin:6px 0 0">${K.u}${L.some(m=>+m.price>0)?` · kostua ≈ ${nf(L.reduce((a,m)=>a+(mMonthly(m)[mon]||0)*(+m.price||0),0))} € ${HIL[+mon.slice(5)-1]}`:""}</div></div>
+ <div class="acts"><span class="grow"></span><button class="btn" id="tsZ">Itxi</button></div>`);$("sheet").scrollTop=0;$("tsZ").onclick=close}
 function subOrd(L){const ids=new Set(L.map(m=>m.id)),out=[],add=m=>{out.push(m);L.filter(c=>c.parent===m.id&&c.id!==m.id).forEach(add)};L.filter(m=>!m.parent||!ids.has(m.parent)).forEach(add);return out}
 function drawKon(V){const G={};meters.slice().sort((a,b)=>kRank(a.kind)-kRank(b.kind)||(a.place||"").localeCompare(b.place||"","es")||rRank(a.erol)-rRank(b.erol)||(a.ord||0)-(b.ord||0)||a.name.localeCompare(b.name,"es")).forEach(m=>{const k=KIND[m.kind]?m.kind:"el",g=KIND[k].ic+" "+KIND[k].l;(G[g]=G[g]||[]).push(m)});
  const mon=today.slice(0,7),tot={};meters.forEach(m=>{if(m.erol==="plakak"||m.erol==="isuria"||m.parent)return;const v=mMonthly(m)[mon];if(v){const k=m.kind||"el";tot[k]=(tot[k]||0)+v}});
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Kontsumoak</h2><button class="btn sm" id="kN">+ Kontagailua</button></div>
  <label class="konr">🔔 Kontagailuak irakurtzeko gogorarazi <select id="kRd"><option value="-1"${konOn()?"":" selected"}>Ez</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${konOn()&&konDay()===d?" selected":""}>${KWD[d]}</option>`).join("")}</select></label>
- ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).sort((a,b)=>kRank(a[0])-kRank(b[0])).map(([k,v])=>`<div><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]}</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
+ ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).sort((a,b)=>kRank(a[0])-kRank(b[0])).map(([k,v])=>`<div data-kt="${k}" role="button" tabindex="0" style="cursor:pointer"><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]} ›</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
  ${solarBlock()}
  <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
  ${combCards()}
  ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${subOrd(L).map(meterCard).join("")}`).join(""):
  `<div class="empty"><p>Oraindik ez dago kontagailurik.<br>Gehitu argindarraren, uraren edo gasaren kontagailuak eta apuntatu irakurketak aldian behin (adib. astelehenero edo hilaren hasieran).</p><p class="note">App-ak kalkulatuko du zenbat kontsumitu den eta abisatuko dizu zerbait arraroa badago.</p></div>`}
  <div class="note" style="margin-top:14px">⚡ Laster: koadroetako Shelly neurgailuak.</div></div>`;
- $("kN").onclick=()=>editMeter();V.querySelectorAll("[data-cmb]").forEach(b=>b.onclick=()=>combSheet(b.dataset.cmb));$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
+ $("kN").onclick=()=>editMeter();V.querySelectorAll("[data-cmb]").forEach(b=>b.onclick=()=>combSheet(b.dataset.cmb));V.querySelectorAll("[data-kt]").forEach(b=>b.onclick=()=>totSheet(b.dataset.kt));$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
  V.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>meterSheet(meters.find(x=>x.id===b.dataset.mt)))}
 function saveMeter(m){const i=meters.findIndex(x=>x.id===m.id);if(i>=0)meters[i]=m;else meters.push(m);put("meters",m)}
 function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:"",price:"",src:"eskuz",reads:[],ord:meters.length+1};
