@@ -341,6 +341,12 @@ details.rg.gs-ry{background:linear-gradient(100deg,rgba(255,182,39,.2),rgba(255,
 .lgd{display:flex;gap:12px;font-size:11px;color:var(--mute)}.lgd i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .rdl{display:flex;flex-direction:column}.rdr{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.rdr:last-child{border:0}.rdd{width:78px;color:var(--mute)}.rdv{font-weight:700;flex:0 0 auto}.rdc{flex:1;color:var(--mute);font-size:12px;text-align:right}
 .seg{display:grid!important;grid-template-columns:repeat(3,1fr)}.seg button{white-space:normal!important}
+.elst{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute);margin:8px 2px 0}.elst .dot{width:8px;height:8px;border-radius:50%;background:var(--mute)}.elst .dot.ok{background:var(--ok)}.elst .dot.err{background:var(--urg)}
+.dnav{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-top:4px}.dnav b{font-size:14px;text-align:center;flex:1}
+.dd{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}.dd:last-child{border:0}.dd span{color:var(--mute)}
+.albtn{display:block;width:100%;text-align:left;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.45);color:#ffb0b0;border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;margin-top:6px;cursor:pointer}
+.gbar{flex-wrap:wrap}.gbar .gadd{flex:1 1 140px;display:block}
+.konr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:6px 2px 4px}.konr select{width:auto;padding:6px 8px;font-size:13px}.av.kon{background:linear-gradient(100deg,rgba(76,201,240,.25),rgba(76,201,240,.06) 70%);border-color:rgba(76,201,240,.5);animation:none!important}.av.kon .avd{background:#4cc9f0;color:#06262c}.av.kon,.av.kon .avt,.av.kon .avh{color:#e6f7ff}.av.kon .avh{opacity:.8}
 </style>
 
 <div class="wrap">
@@ -377,10 +383,10 @@ function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout
 const LS=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
 const LSset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 function put(col,o){
- if(!DB){LSset("mnt_"+col,(col==="spaces"?spaces:col==="events"?events:col==="revs"?[...revs,...FOLDS]:col==="docs"?docs:col==="staff"?staff:col==="meters"?meters:ALL));render();return}
+ if(!DB){LSset("mnt_"+col,(col==="spaces"?spaces:col==="events"?events:col==="revs"?[...revs,...FOLDS]:col==="docs"?docs:col==="staff"?staff:col==="meters"?meters:col==="elec"?ELEC:col==="solar"?SOLAR:ALL));render();return}
  const{id,...d}=o;DB.collection(col).doc(id).set(d).catch(e=>toast("Ezin izan da gorde ("+(e&&e.code||"errorea")+"). Saiatu berriro."));render()}
 function del(col,id){
- if(!DB){LSset("mnt_"+col,(col==="spaces"?spaces:col==="events"?events:col==="revs"?[...revs,...FOLDS]:col==="docs"?docs:col==="staff"?staff:col==="meters"?meters:ALL));render();return}
+ if(!DB){LSset("mnt_"+col,(col==="spaces"?spaces:col==="events"?events:col==="revs"?[...revs,...FOLDS]:col==="docs"?docs:col==="staff"?staff:col==="meters"?meters:col==="elec"?ELEC:col==="solar"?SOLAR:ALL));render();return}
  DB.collection(col).doc(id).delete().catch(()=>toast("Ezin izan da ezabatu. Saiatu berriro."));render()}
 function saveTask(t){const i=ALL.findIndex(x=>x.id===t.id);if(i>=0)ALL[i]=t;else ALL.push(t);put("tasks",t)}
 function saveSpace(s){const i=spaces.findIndex(x=>x.id===s.id);if(i>=0)spaces[i]=s;else spaces.push(s);put("spaces",s)}
@@ -415,7 +421,12 @@ function avisos(){const A=$("avis");if(!A)return;const t=new Date(today+"T00:00"
  const L=events.filter(e=>e.type==="bilera"&&(e.date===today||e.date===tm)).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
  const md=d=>d.slice(5),B=[[today,"Gaur"],[tm,"Bihar"]].flatMap(([d,w])=>staff.filter(c=>c.bday===md(d)).sort(byNm).map(c=>({c,d,w})));
  const CC=["#ff4d6d","#ffd166","#06d6a0","#4cc9f0","#b388ff","#ff9f1c"],conf=n=>Array.from({length:n},(_,i)=>`<i style="left:${(i*37+11)%100}%;background:${CC[i%6]};animation-delay:${((i*0.37)%2.4).toFixed(2)}s;animation-duration:${(2.2+(i%5)*0.35).toFixed(2)}s;${i%3?"":"border-radius:50%;"}"></i>`).join("");
- A.hidden=!L.length&&!B.length;A.innerHTML=B.map(o=>`<button class="av bday${o.w==="Gaur"?"":" bihar"}" data-bd="${esc(o.c.id)}"><span class="cf" aria-hidden="true">${conf(o.w==="Gaur"?22:8)}</span><span class="avd">${o.w}</span><span class="avt">🎂 ${o.w==="Gaur"?"Zorionak, "+esc(o.c.name)+"!":"Urtebetetzea: "+esc(o.c.name)}</span><span class="avh">🎉</span></button>`).join("")+L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
+ const KR=(()=>{if(!konOn()||!meters.length)return[];const P=konPending(),wd=new Date(today+"T00:00").getDay(),old=P.filter(x=>x.age>=8);
+  if(wd===konDay()&&P.length)return[{w:"Gaur",t:`📋 Kontagailuak irakurtzeko eguna (${P.length})`}];
+  if(old.length)return[{w:"Gaur",t:`📋 ${old.length} kontagailu ${Math.max(...old.map(x=>x.age))>=999?"irakurri gabe":Math.max(...old.map(x=>x.age))+" egun irakurri gabe"}`}];
+  if((wd+1)%7===konDay())return[{w:"Bihar",t:"📋 Kontagailuak irakurtzeko eguna"}];return[]})();
+ A.hidden=!L.length&&!B.length&&!KR.length;A.innerHTML=KR.map(o=>`<button class="av kon${o.w==="Gaur"?"":" bihar"}" data-kon="1"><span class="avd">${o.w}</span><span class="avt">${esc(o.t)}</span><span class="avh">Kontsumoak ›</span></button>`).join("")+B.map(o=>`<button class="av bday${o.w==="Gaur"?"":" bihar"}" data-bd="${esc(o.c.id)}"><span class="cf" aria-hidden="true">${conf(o.w==="Gaur"?22:8)}</span><span class="avd">${o.w}</span><span class="avt">🎂 ${o.w==="Gaur"?"Zorionak, "+esc(o.c.name)+"!":"Urtebetetzea: "+esc(o.c.name)}</span><span class="avh">🎉</span></button>`).join("")+L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
+ A.querySelectorAll("[data-kon]").forEach(b=>b.onclick=()=>{RGO.clear();DGO.clear();view="kon";render();animV();scrollTo(0,0)});
  A.querySelectorAll("[data-bd]").forEach(b=>b.onclick=()=>confettiBurst(b));
  if(B.some(o=>o.w==="Gaur")&&!window.__cfDone){window.__cfDone=1;setTimeout(()=>{const b=A.querySelector(".bday:not(.bihar)");if(b)confettiBurst(b)},500)}
  A.querySelectorAll("[data-avd]").forEach(b=>b.onclick=()=>{view="cal";CD=b.dataset.avd;CM=CD.slice(0,7);render();animV();scrollTo(0,0)})}
@@ -461,6 +472,130 @@ function parseVcf(txt){const out=[];txt=txt.replace(/\r\n[ \t]/g,"").replace(/\n
    else if(k.startsWith("TEL"))tels.push({v,m:/CELL|MOBILE|IPHONE/.test(k)})});
   const name=(fn||nn).trim(),tel=(tels.find(t=>t.m)||tels[0]||{}).v||"";if(name&&tel)out.push({n:name,p:tel})});
  return out}
+/* ---------- argindarra (Datadis) ---------- */
+let ELEC=[],ELCFG={};
+const elCups=()=>[...new Set([...(ELCFG.supplies||[]).map(s=>s.cups),...ELEC.map(e=>e.cups)])].filter(Boolean);
+const elSup=c=>(ELCFG.supplies||[]).find(s=>s.cups===c)||{};
+const elName=c=>(ELCFG.names||{})[c]||elSup(c).address||("CUPS …"+String(c).slice(-6));
+const elDays=c=>ELEC.filter(e=>e.cups===c&&e.d).sort((a,b)=>a.d.localeCompare(b.d));
+const elH=e=>{const h=(e&&e.h)||[];return Array.from({length:24},(_,i)=>h[i]==null?null:+h[i])};
+const elSum=e=>((e&&e.h)||[]).reduce((a,b)=>a+(+b||0),0);
+const elOff=d=>dayH(d)===0;
+const med=a=>{const s=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);return s.length?s[Math.floor(s.length/2)]:0};
+function elBase(c,upTo){const D=elDays(c).filter(e=>!upTo||e.d<=upTo).slice(-30);return med(D.flatMap(e=>elH(e).slice(1,6)))}
+/* gauez edo jaiegunetan ohikoa baino askoz gehiago */
+function elAlerts(c,days=7){const D=elDays(c).slice(-days),out=[];
+ D.forEach(e=>{const b=elBase(c,e.d)||0.5,lim=Math.max(b*2.5,b+3),H=elH(e),off=elOff(e.d);let s=-1,mx=0;
+  const flush=i=>{if(s>=0){out.push({d:e.d,a:s,z:i,kw:mx,b});s=-1;mx=0}};
+  H.forEach((v,i)=>{const quiet=off||i<6||i>=21;if(quiet&&v!=null&&v>lim){if(s<0)s=i;mx=Math.max(mx,v)}else flush(i)});flush(24)});
+ return out}
+const WDE=["Igandean","Astelehenean","Asteartean","Asteazkenean","Ostegunean","Ostiralean","Larunbatean"];
+const elAlTxt=a=>`${WDE[new Date(a.d+"T00:00").getDay()]} (${fmtD(a.d)}) ${pad(a.a)}:00–${pad(a.z)}:00 ${nf(a.kw,1)} kW — ohikoa ${nf(a.b,1)} kW`;
+function elHourChart(e,c){const H=elH(e),b=elBase(c,e.d)||0.5,lim=Math.max(b*2.5,b+3),off=elOff(e.d),mx=Math.max(4,...H.filter(v=>v!=null)),W=330,Hh=150,bw=W/24;
+ let s=`<svg viewBox="0 0 ${W} ${Hh+22}" width="100%" role="img" aria-label="Ordutik orduko kontsumoa">`;
+ const step=mx>40?20:mx>20?10:mx>8?5:2;for(let y=step;y<mx;y+=step){const yy=Hh-y/mx*Hh*0.92;s+=`<line x1="0" x2="${W}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-dasharray="2 3"/><text x="${W-2}" y="${yy-3}" fill="var(--mute)" font-size="9" text-anchor="end">${y} kW</text>`}
+ H.forEach((v,i)=>{if(v==null)return;const h=v/mx*Hh*0.92,quiet=off||i<6||i>=21,col=quiet&&v>lim?"#ff6b6b":quiet?"#4b5d7a":"#ffb627";s+=`<rect x="${i*bw+1.5}" y="${Hh-h}" width="${bw-3}" height="${Math.max(h,1)}" rx="2" fill="${col}"><title>${pad(i)}:00 · ${nf(v,2)} kWh</title></rect>`});
+ [0,6,12,18,23].forEach(i=>s+=`<text x="${i*bw+bw/2}" y="${Hh+14}" fill="var(--mute)" font-size="9" text-anchor="middle">${pad(i)}</text>`);
+ return s+`</svg><div class="lgd"><span><i style="background:#ffb627"></i>Lan-orduak</span><span><i style="background:#4b5d7a"></i>Gaua / jaieguna</span><span><i style="background:#ff6b6b"></i>Ohikoa baino gehiago</span></div>`}
+function elDayBars(c,upTo,n=30){const D=elDays(c).filter(e=>e.d<=upTo).slice(-n);if(!D.length)return "";const V=D.map(elSum),mx=Math.max(1,...V),W=330,H=100,bw=W/n;
+ const wk=med(D.filter(e=>!elOff(e.d)).map(elSum)),ofm=med(D.filter(e=>elOff(e.d)).map(elSum));
+ let s=`<svg viewBox="0 0 ${W} ${H+20}" width="100%" role="img" aria-label="Eguneko kontsumoa">`;
+ D.forEach((e,i)=>{const v=V[i],h=v/mx*H*0.92,off=elOff(e.d),hi=off?ofm&&v>ofm*1.4:wk&&v>wk*1.3,x=(n-D.length+i)*bw;s+=`<rect x="${x+1.5}" y="${H-h}" width="${bw-3}" height="${Math.max(h,1)}" rx="2" fill="${hi?"#ff6b6b":off?"#4b5d7a":"#ffb627"}"${e.d===upTo?' stroke="#fff" stroke-width="1.5"':""} data-eld="${e.d}"><title>${fmtD(e.d)} · ${nf(v)} kWh</title></rect>`;
+  if(i%5===0||i===D.length-1)s+=`<text x="${x+bw/2}" y="${H+13}" fill="var(--mute)" font-size="8.5" text-anchor="middle">${+e.d.slice(8)}</text>`});
+ return s+`</svg>`}
+function elMonth(c,ym){return elDays(c).filter(e=>e.d.startsWith(ym)).reduce((a,e)=>a+elSum(e),0)}
+function elecBlock(){const C=elCups(),st=ELCFG.last?`Datadis · azken eguneratzea ${fmtY(String(ELCFG.last).slice(0,10))} ${String(ELCFG.last).slice(11,16)}`:ELEC.length?"Fitxategitik inportatuta":"Datadis ez dago konektatuta oraindik";
+ return `<div class="mgrp">⚡ Argindarra · ordutik ordura</div>
+ ${C.map(c=>{const D=elDays(c),e=D[D.length-1];if(!e)return `<button class="mrow" data-elc="${esc(c)}"><span class="mic" style="color:#ffb627">⚡</span><span class="mtx"><b>${esc(elName(c))}</b><small>Daturik ez oraindik</small></span></button>`;
+  const v=elSum(e),off=elOff(e.d),same=D.slice(-31,-1).filter(x=>elOff(x.d)===off).map(elSum),m=med(same),al=elAlerts(c),r=m?v/m:1,cls=al.length?"rr":r>1.2?"ry":"rg";
+  return `<button class="mrow ms-${cls}" data-elc="${esc(c)}"><span class="mic" style="color:#ffb627">⚡</span><span class="mtx"><b>${esc(elName(c))}</b><small>${fmtY(e.d)} · ${off?"jaieguna/asteburua":"laneguna"}</small><small class="mst">${al.length?"⚠︎ "+al.length+" abisu azken 7 egunetan":m?(r>1.05?"Ohikoa baino %"+Math.round((r-1)*100)+" gehiago":r<0.95?"Ohikoa baino %"+Math.round((1-r)*100)+" gutxiago":"Ohiko kontsumoa"):"Datu gutxi oraindik"}</small></span><span class="mvl"><b>${nf(v)}</b><small>kWh egunean</small></span></button>`}).join("")}
+ <div class="elst"><span class="dot${ELCFG.error?" err":ELCFG.last?" ok":""}"></span>${esc(ELCFG.error?"Errorea: "+ELCFG.error:st)}</div>
+ <div class="gbar"><button class="gadd" id="elR">⟳ Datadis: eguneratu orain</button><label class="gadd" style="text-align:center;cursor:pointer">⬆︎ CSV inportatu<input type="file" id="elF" accept=".csv,text/csv,.txt" hidden></label></div>`}
+function bindElec(V){V.querySelectorAll("[data-elc]").forEach(b=>b.onclick=()=>elecSheet(b.dataset.elc));
+ const r=V.querySelector("#elR");if(r)r.onclick=()=>{sheet(`<h3>⟳ Datadis</h3><div class="note">Datadis-etik datuak orain ekartzeko eskatuko da (Firebase-ko funtzioa instalatuta egon behar du). Minutu bat inguru behar du.</div><label class="f">Noiztik (aukerakoa, iraganeko datuak ekartzeko)<input type="month" id="elFr" value="${esc(ELCFG.backfillFrom||"")}"></label><div class="acts"><span class="grow"></span><button class="btn" id="elRc">Utzi</button><button class="btn pri" id="elRg">Eskatu</button></div>`);
+  $("elRc").onclick=close;$("elRg").onclick=()=>{const v=$("elFr").value;const p={runNow:Date.now()};if(v)p.backfillFrom=v;else delete ELCFG.backfillFrom;saveELCFG(p);toast("Eskatuta. Datuak laster agertuko dira.");close()}};
+ const f=V.querySelector("#elF");if(f)f.onchange=async()=>{const x=f.files[0];f.value="";if(x)elImport(x)}}
+function saveELCFG(p){ELCFG={...ELCFG,...p};if(DB)DB.collection("config").doc("datadis").set(cl(ELCFG)).catch(()=>toast("Ezin izan da gorde"));render()}
+function elecSheet(c,d){const D=elDays(c);if(!D.length){toast("Ez dago daturik oraindik");return}d=d&&D.some(e=>e.d===d)?d:D[D.length-1].d;const i=D.findIndex(e=>e.d===d),e=D[i],H=elH(e),tot=elSum(e);
+ const pk=H.reduce((m,v,j)=>v!=null&&v>m.v?{v,j}:m,{v:-1,j:0}),pr=+ELCFG.price||0,ym=d.slice(0,7),pym=(+ym.slice(0,4)-1)+ym.slice(4),mt=elMonth(c,ym),pmt=elMonth(c,pym);
+ const night=H.slice(0,6).concat(H.slice(21)).reduce((a,v)=>a+(+v||0),0),al=elAlerts(c,14);
+ sheet(`<h3>⚡ ${esc(elName(c))} <button class="btn sm" id="elRn" aria-label="Izena aldatu">✎</button></h3><div class="note">CUPS ${esc(c)}${elSup(c).distributor?" · "+esc(elSup(c).distributor):""}</div>
+ <div class="dnav"><button class="btn sm" id="elP"${i>0?"":" disabled"}>‹</button><b>${["Igandea","Astelehena","Asteartea","Asteazkena","Osteguna","Ostirala","Larunbata"][new Date(d+"T00:00").getDay()]}, ${fmtY(d)}${elOff(d)?" · jaieguna":""}</b><button class="btn sm" id="elN"${i<D.length-1?"":" disabled"}>›</button></div>
+ <div class="kp"><div><small>Egunean</small><b>${nf(tot)} kWh</b>${pr?`<small>~${nf(tot*pr)} €</small>`:""}</div><div><small>Gehienezkoa</small><b>${nf(pk.v,1)} kW</b><small>${pad(pk.j)}:00</small></div><div><small>Gauez (21–6)</small><b>${nf(night)} kWh</b><small>oinarria ${nf(elBase(c,d),1)} kW</small></div></div>
+ ${soDayPV(d)?`<div class="card2"><div class="dd"><span>☀️ Plakek ekoiztua</span><b>${nf(soDayPV(d))} kWh</b></div><div class="dd"><span>Kontsumo erreala (sarea + plakak)</span><b>${nf(tot+soDayPV(d))} kWh</b></div><div class="dd"><span>Plaken ekarpena</span><b style="color:var(--ok)">%${Math.round(soDayPV(d)/(tot+soDayPV(d))*100)}</b></div></div>`:""}
+ <div class="card2"><b>Ordutik ordura</b>${elHourChart(e,c)}</div>
+ <div class="card2"><b>Azken 30 egunak</b><div class="note" style="margin:0">Sakatu egun bat ikusteko</div>${elDayBars(c,D[D.length-1].d)}</div>
+ <div class="card2"><div class="dd"><span>${HIL[+ym.slice(5)-1]} ${ym.slice(0,4)}</span><b>${nf(mt)} kWh${pr?" · ~"+nf(mt*pr)+" €":""}</b></div><div class="dd"><span>Iaz hilabete berean</span><b>${pmt?nf(pmt)+" kWh":"—"}</b></div>${pmt?`<div class="dd"><span>Aldea</span><b style="color:${mt>pmt?"var(--urg)":"var(--ok)"}">${mt>pmt?"+":""}${nf((mt-pmt)/pmt*100,1)} %</b></div>`:""}</div>
+ ${al.length?`<div class="card2"><b>Abisuak (14 egun)</b>${al.slice(-6).reverse().map(a=>`<button class="albtn" data-ald="${a.d}">⚠︎ ${esc(elAlTxt(a))}</button>`).join("")}</div>`:""}
+ <label class="f">Prezioa (€/kWh, gutxi gorabehera)<input id="elPr" type="number" step="0.001" min="0" value="${esc(ELCFG.price??"")}" placeholder="Adib.: 0,17 (Goiener-en fakturatik)"></label>
+ <div class="acts"><span class="grow"></span><button class="btn" id="elZ">Itxi</button></div>`);
+ $("sheet").scrollTop=0;$("elZ").onclick=close;$("elP").onclick=()=>elecSheet(c,D[i-1].d);$("elN").onclick=()=>elecSheet(c,D[i+1].d);
+ document.querySelectorAll("[data-eld]").forEach(r=>{r.style.cursor="pointer";r.addEventListener("click",()=>elecSheet(c,r.dataset.eld))});
+ document.querySelectorAll("[data-ald]").forEach(b=>b.onclick=()=>elecSheet(c,b.dataset.ald));
+ $("elPr").onchange=()=>saveELCFG({price:$("elPr").value===""?"":+$("elPr").value});
+ $("elRn").onclick=()=>askName2("Hornidura-puntuaren izena","Izena (adib.: Salbatore Mitxelena, Ixpilla)",elName(c),v=>{saveELCFG({names:{...(ELCFG.names||{}),[c]:v}});setTimeout(()=>elecSheet(c,d),0)})}
+/* CSV inportatu (Datadis edo komertzializatzailearen deskarga) */
+function elParseCSV(txt){const L=txt.replace(/^﻿/,"").split(/\r?\n/).filter(l=>l.trim());if(L.length<2)return[];
+ const sep=(L[0].match(/;/g)||[]).length>=(L[0].match(/,/g)||[]).length?";":",",split=l=>l.split(sep).map(x=>x.trim().replace(/^"|"$/g,""));
+ const hd=split(L[0]).map(x=>x.toLowerCase()),fi=re=>hd.findIndex(x=>re.test(x));
+ const iC=fi(/cups/),iD=fi(/fecha|date|data/),iH=fi(/hora|time|ordua/),iV=fi(/consumo|kwh|ae_kwh|kontsumo/);
+ if(iD<0||iH<0||iV<0)throw new Error("Zutabeak ez dira ezagutu (data, ordua, kontsumoa)");
+ const out=[];for(const l of L.slice(1)){const c=split(l);if(c.length<3)continue;let ds=c[iD];let y,m,dd;
+  let mm=ds.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);if(mm){y=mm[1];m=mm[2];dd=mm[3]}else{mm=ds.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);if(!mm)continue;dd=mm[1];m=mm[2];y=mm[3]}
+  const hh=parseInt(String(c[iH]).split(":")[0],10);if(!isFinite(hh))continue;let vs=String(c[iV]).trim();if(vs.includes(",")){vs=vs.replace(/\./g,"").replace(",",".")}const v=parseFloat(vs);if(!isFinite(v))continue;
+  out.push({cups:iC>=0?c[iC]:"",d:`${y}-${pad(+m)}-${pad(+dd)}`,i:Math.min(24,Math.max(0,hh-1)),v})}
+ return out}
+async function elImport(file){try{const R=elParseCSV(await file.text());if(!R.length){toast("Ez da daturik aurkitu fitxategian");return}
+  const def=R.find(r=>r.cups)?null:(elCups()[0]||"");
+  const G={};R.forEach(r=>{const c=r.cups||def||"NAGUSIA",k=c+"_"+r.d;(G[k]=G[k]||{id:k,cups:c,d:r.d,h:Array(24).fill(null),src:"csv"}).h[Math.min(23,r.i)]=((G[k].h[Math.min(23,r.i)]||0)+r.v)});
+  const L=Object.values(G);for(const x of L){const old=ELEC.find(e=>e.id===x.id);if(old&&old.src==="datadis")continue;const i=ELEC.findIndex(e=>e.id===x.id);if(i>=0)ELEC[i]=x;else ELEC.push(x);put("elec",x)}
+  toast(`✓ ${L.length} egun inportatuta`);render()}catch(e){toast("Ezin izan da inportatu: "+(e.message||e))}}
+
+/* ---------- eguzki-plakak (FusionSolar) ---------- */
+let SOLAR=[],FSCFG={},KONCFG={};
+const KWD=["Igandeetan","Astelehenetan","Asteartetan","Asteazkenetan","Ostegunetan","Ostiraletan","Larunbatetan"];
+const konDay=()=>KONCFG.day==null?1:+KONCFG.day,konOn=()=>KONCFG.on!==false;
+function konPending(){return meters.filter(m=>(m.src||"eskuz")==="eskuz").map(m=>{const R=mReads(m),l=R[R.length-1];return{m,age:l?dDiff(l.d,today):999}}).filter(x=>x.age>0)}
+function saveKON(p){KONCFG={...KONCFG,...p};if(DB)DB.collection("config").doc("kon").set(cl(KONCFG)).catch(()=>toast("Ezin izan da gorde"));else LSset("mnt_kon",KONCFG);render()}
+const soSt=()=>[...new Set([...(FSCFG.stations||[]).map(s=>s.code),...SOLAR.map(e=>e.st)])].filter(Boolean);
+const soName=c=>((FSCFG.stations||[]).find(s=>s.code===c)||{}).name||c;
+const soDays=c=>SOLAR.filter(e=>e.st===c&&e.d).sort((a,b)=>a.d.localeCompare(b.d));
+const soPV=e=>e&&e.t&&e.t.pv!=null?+e.t.pv:((e&&e.h)||[]).reduce((a,b)=>a+(+b||0),0);
+const soDayPV=d=>SOLAR.filter(e=>e.d===d).reduce((a,e)=>a+soPV(e),0);
+function soHourChart(e){const H=Array.from({length:24},(_,i)=>e.h&&e.h[i]!=null?+e.h[i]:null);if(!H.some(v=>v!=null))return `<div class="note">Egun honetarako ez dago ordutik orduko daturik (eguneko guztizkoa bakarrik).</div>`;
+ const mx=Math.max(1,...H.filter(v=>v!=null)),W=330,Hh=130,bw=W/24;let s=`<svg viewBox="0 0 ${W} ${Hh+22}" width="100%" role="img" aria-label="Ekoizpena ordutik ordura">`;
+ H.forEach((v,i)=>{if(v==null)return;const h=v/mx*Hh*0.92;s+=`<rect x="${i*bw+1.5}" y="${Hh-h}" width="${bw-3}" height="${Math.max(h,1)}" rx="2" fill="#3ddc97"><title>${pad(i)}:00 · ${nf(v,2)} kWh</title></rect>`});
+ [0,6,12,18,23].forEach(i=>s+=`<text x="${i*bw+bw/2}" y="${Hh+14}" fill="var(--mute)" font-size="9" text-anchor="middle">${pad(i)}</text>`);
+ return s+`<text x="${W-2}" y="10" fill="var(--mute)" font-size="9" text-anchor="end">max ${nf(mx,1)} kWh</text></svg>`}
+function soDayBars(c,upTo,n=30){const D=soDays(c).filter(e=>e.d<=upTo).slice(-n);if(!D.length)return "";const V=D.map(soPV),mx=Math.max(1,...V),W=330,H=90,bw=W/n;
+ let s=`<svg viewBox="0 0 ${W} ${H+20}" width="100%" role="img" aria-label="Eguneko ekoizpena">`;
+ D.forEach((e,i)=>{const h=V[i]/mx*H*0.92,x=(n-D.length+i)*bw;s+=`<rect x="${x+1.5}" y="${H-h}" width="${bw-3}" height="${Math.max(h,1)}" rx="2" fill="#3ddc97"${e.d===upTo?' stroke="#fff" stroke-width="1.5"':""} data-sod="${e.d}"><title>${fmtD(e.d)} · ${nf(V[i])} kWh</title></rect>`;
+  if(i%5===0||i===D.length-1)s+=`<text x="${x+bw/2}" y="${H+13}" fill="var(--mute)" font-size="8.5" text-anchor="middle">${+e.d.slice(8)}</text>`});
+ return s+`</svg>`}
+const soMonth=(c,ym)=>soDays(c).filter(e=>e.d.startsWith(ym)).reduce((a,e)=>a+soPV(e),0);
+function solarBlock(){const C=soSt(),st=FSCFG.last?`FusionSolar · azken eguneratzea ${fmtY(String(FSCFG.last).slice(0,10))} ${String(FSCFG.last).slice(11,16)}`:"FusionSolar ez dago konektatuta oraindik";
+ return `<div class="mgrp" style="margin-top:18px">☀️ Eguzki-plakak · FusionSolar</div>
+ ${C.map(c=>{const D=soDays(c),e=D[D.length-1];if(!e)return "";const v=soPV(e),m=med(D.slice(-31,-1).map(soPV)),mt=soMonth(c,today.slice(0,7));
+  return `<button class="mrow ms-rg" data-soc="${esc(c)}"><span class="mic" style="color:#3ddc97">☀️</span><span class="mtx"><b>${esc(soName(c))}</b><small>${fmtY(e.d)}${e.d===today?" (gaur arte)":""}</small><small class="mst">${HIL[+today.slice(5,7)-1]}: ${nf(mt)} kWh${m?" · ohikoa "+nf(m)+" kWh/egun":""}</small></span><span class="mvl"><b>${nf(v)}</b><small>kWh ekoiztuta</small></span></button>`}).join("")}
+ <div class="elst"><span class="dot${FSCFG.error?" err":FSCFG.last?" ok":""}"></span>${esc(FSCFG.error?"Errorea: "+FSCFG.error:st)}</div>
+ <div class="gbar"><button class="gadd" id="soR">⟳ FusionSolar: eguneratu orain</button></div>`}
+function saveFSCFG(p){FSCFG={...FSCFG,...p};if(DB)DB.collection("config").doc("fusion").set(cl(FSCFG)).catch(()=>toast("Ezin izan da gorde"));render()}
+function bindSolar(V){V.querySelectorAll("[data-soc]").forEach(b=>b.onclick=()=>solarSheet(b.dataset.soc));
+ const r=V.querySelector("#soR");if(r)r.onclick=()=>{sheet(`<h3>⟳ FusionSolar</h3><div class="note">FusionSolar-etik datuak orain ekartzeko eskatuko da (Firebase-ko funtzioa instalatuta egon behar du). 1–3 minutu behar ditu.</div><label class="f">Noiztik (aukerakoa, iraganeko hilabeteak ekartzeko; hilabete bat eskaera bakoitzeko)<input type="month" id="soFr" value="${esc(FSCFG.backfillFrom||"")}"></label><div class="acts"><span class="grow"></span><button class="btn" id="soRc">Utzi</button><button class="btn pri" id="soRg">Eskatu</button></div>`);
+  $("soRc").onclick=close;$("soRg").onclick=()=>{const v=$("soFr").value;const p={runNow:Date.now()};if(v)p.backfillFrom=v;saveFSCFG(p);toast("Eskatuta. Datuak laster agertuko dira.");close()}}}
+function solarSheet(c,d){const D=soDays(c);if(!D.length)return;d=d&&D.some(e=>e.d===d)?d:D[D.length-1].d;const i=D.findIndex(e=>e.d===d),e=D[i],v=soPV(e),ym=d.slice(0,7),pym=(+ym.slice(0,4)-1)+ym.slice(4),mt=soMonth(c,ym),pmt=soMonth(c,pym);
+ const grid=elCups().map(cc=>elDays(cc).find(x=>x.d===d)).filter(Boolean).reduce((a,x)=>a+elSum(x),0);
+ sheet(`<h3>☀️ ${esc(soName(c))}</h3><div class="note">FusionSolar · ${esc(c)}</div>
+ <div class="dnav"><button class="btn sm" id="soP"${i>0?"":" disabled"}>‹</button><b>${["Igandea","Astelehena","Asteartea","Asteazkena","Osteguna","Ostirala","Larunbata"][new Date(d+"T00:00").getDay()]}, ${fmtY(d)}</b><button class="btn sm" id="soN"${i<D.length-1?"":" disabled"}>›</button></div>
+ <div class="kp"><div><small>Ekoiztuta</small><b>${nf(v)} kWh</b></div>${grid?`<div><small>Saretik erosia</small><b>${nf(grid)} kWh</b></div><div><small>Kontsumo erreala</small><b>${nf(grid+v)} kWh</b><small>plakak: %${Math.round(v/(grid+v)*100)}</small></div>`:`<div><small>${HIL[+ym.slice(5)-1]}</small><b>${nf(mt)} kWh</b></div>`}</div>
+ <div class="card2"><b>Ordutik ordura</b>${soHourChart(e)}</div>
+ <div class="card2"><b>Azken 30 egunak</b><div class="note" style="margin:0">Sakatu egun bat ikusteko</div>${soDayBars(c,D[D.length-1].d)}</div>
+ <div class="card2"><div class="dd"><span>${HIL[+ym.slice(5)-1]} ${ym.slice(0,4)}</span><b>${nf(mt)} kWh</b></div><div class="dd"><span>Iaz hilabete berean</span><b>${pmt?nf(pmt)+" kWh":"—"}</b></div></div>
+ ${grid?"":`<div class="note">Saretik erositakoa ere ikusteko, Datadis edo kontagailu orokorraren datuak behar dira (Argindarra).</div>`}
+ <div class="acts"><span class="grow"></span><button class="btn" id="soZ">Itxi</button></div>`);
+ $("sheet").scrollTop=0;$("soZ").onclick=close;$("soP").onclick=()=>solarSheet(c,D[i-1].d);$("soN").onclick=()=>solarSheet(c,D[i+1].d);
+ document.querySelectorAll("[data-sod]").forEach(r=>{r.style.cursor="pointer";r.addEventListener("click",()=>solarSheet(c,r.dataset.sod))})}
+
 /* ---------- kontsumoak ---------- */
 const KIND={el:{l:"Argindarra",u:"kWh",ic:"⚡",c:"#ffb627"},ur:{l:"Ura",u:"m³",ic:"💧",c:"#4cc9f0"},gas:{l:"Gasa",u:"m³",ic:"🔥",c:"#ff7ab6"},gasol:{l:"Gasolioa",u:"L",ic:"🛢",c:"#b388ff"}};
 const KSRC={eskuz:"Eskuz",shelly:"Shelly (laster)",datadis:"Datadis (laster)"};
@@ -498,11 +633,15 @@ function meterCard(m){const k=kOf(m),R=mReads(m),last=R[R.length-1],I=mIntervals
 function drawKon(V){const G={};meters.slice().sort((a,b)=>(a.place||"").localeCompare(b.place||"","es")||(a.ord||0)-(b.ord||0)||a.name.localeCompare(b.name,"es")).forEach(m=>{(G[m.place||"Orokorra"]=G[m.place||"Orokorra"]||[]).push(m)});
  const mon=today.slice(0,7),tot={};meters.forEach(m=>{const v=mMonthly(m)[mon];if(v){const k=m.kind||"el";tot[k]=(tot[k]||0)+v}});
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Kontsumoak</h2><button class="btn sm" id="kN">+ Kontagailua</button></div>
+ <label class="konr">🔔 Kontagailuak irakurtzeko gogorarazi <select id="kRd"><option value="-1"${konOn()?"":" selected"}>Ez</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${konOn()&&konDay()===d?" selected":""}>${KWD[d]}</option>`).join("")}</select></label>
  ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).map(([k,v])=>`<div><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]}</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
+ ${elecBlock()}
+ ${solarBlock()}
+ <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
  ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${L.map(meterCard).join("")}`).join(""):
  `<div class="empty"><p>Oraindik ez dago kontagailurik.<br>Gehitu argindarraren, uraren edo gasaren kontagailuak eta apuntatu irakurketak aldian behin (adib. astelehenero edo hilaren hasieran).</p><p class="note">App-ak kalkulatuko du zenbat kontsumitu den eta abisatuko dizu zerbait arraroa badago.</p></div>`}
- <div class="note" style="margin-top:14px">⚡ Laster: koadroetako Shelly neurgailuak eta Datadis automatikoki.</div></div>`;
- $("kN").onclick=()=>editMeter();
+ <div class="note" style="margin-top:14px">⚡ Laster: koadroetako Shelly neurgailuak.</div></div>`;
+ $("kN").onclick=()=>editMeter();$("kRd").onchange=e=>{const v=+e.target.value;saveKON(v<0?{on:false}:{on:true,day:v})};bindElec(V);bindSolar(V);
  V.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>meterSheet(meters.find(x=>x.id===b.dataset.mt)))}
 function saveMeter(m){const i=meters.findIndex(x=>x.id===m.id);if(i>=0)meters[i]=m;else meters.push(m);put("meters",m)}
 function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:"",price:"",src:"eskuz",reads:[],ord:meters.length+1};
@@ -1306,9 +1445,11 @@ function start(){const err=e=>{if(e&&e.code==="permission-denied")denied(FBU);el
  DB=FB;spaces=[];ALL=[];events=[];revs=[];docs=[];staff=[];render();
  const on=(c,f)=>SUBS.push(FB.collection(c).onSnapshot(f,err));
  on("spaces",s=>{spaces=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();imp(s)});
- on("config",s=>{const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];STP=(sgd&&cl(sgd.data()).parents)||[];SGP=(sgd&&cl(sgd.data()).parentOf)||{};if(Array.isArray(z))ZU=z;render()});
+ on("config",s=>{{const dd=s.docs.find(x=>x.id==="datadis");ELCFG=(dd&&cl(dd.data()))||{};const fz=s.docs.find(x=>x.id==="fusion");FSCFG=(fz&&cl(fz.data()))||{};const kn=s.docs.find(x=>x.id==="kon");KONCFG=(kn&&cl(kn.data()))||{}}const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];STP=(sgd&&cl(sgd.data()).parents)||[];SGP=(sgd&&cl(sgd.data()).parentOf)||{};if(Array.isArray(z))ZU=z;render()});
  on("staff",s=>{staff=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("meters",s=>{meters=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
+ on("elec",s=>{ELEC=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
+ on("solar",s=>{SOLAR=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("docs",s=>{docs=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();if(!$("ov").hidden&&window._docRefresh)window._docRefresh()});
  on("revs",s=>{revs=splitRevs(s.docs.map(d=>({id:d.id,...cl(d.data())})));render()});
  on("events",s=>{events=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
@@ -1322,7 +1463,7 @@ async function doImport(file){const st=$("impS");try{const o=JSON.parse(await fi
   st.textContent="✓ Dena inportatuta";if(location.hash)history.replaceState(null,"",location.pathname);setTimeout(()=>$("impBar").hidden=true,2500)}
  catch(e){st.textContent="Ezin izan da inportatu: "+(e&&(e.code||e.message)||e)}}
 async function doExport(){const out={app:"mantenua",v:1,exported:today,collections:{},files:{}};
- for(const c of["spaces","tasks","events","revs","docs","staff","config","meters"]){const s=await FB.collection(c).get();out.collections[c]={};s.docs.forEach(d=>out.collections[c][d.id]=d.data())}
+ for(const c of["spaces","tasks","events","revs","docs","staff","config","meters","elec","solar"]){const s=await FB.collection(c).get();out.collections[c]={};s.docs.forEach(d=>out.collections[c][d.id]=d.data())}
  const fs=await FB.collection("files").get();for(const d of fs.docs){const b=await getBlob(d.id);out.files[d.id]={...d.data(),b64:b64(await b.arrayBuffer())};delete out.files[d.id].n}
  await DL.save({filename:"mantenua-kopia-"+today+".json",data:new Blob([JSON.stringify(out)],{type:"application/json"})})}
 /* ---------- arranque ---------- */
