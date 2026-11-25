@@ -346,7 +346,9 @@ details.rg.gs-ry{background:linear-gradient(100deg,rgba(255,182,39,.2),rgba(255,
 .dd{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}.dd:last-child{border:0}.dd span{color:var(--mute)}
 .albtn{display:block;width:100%;text-align:left;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.45);color:#ffb0b0;border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;margin-top:6px;cursor:pointer}
 .gbar{flex-wrap:wrap}.gbar .gadd{flex:1 1 140px;display:block}
-.konr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:6px 2px 4px}.konr select{width:auto;padding:6px 8px;font-size:13px}.av.kon{background:linear-gradient(100deg,rgba(76,201,240,.25),rgba(76,201,240,.06) 70%);border-color:rgba(76,201,240,.5);animation:none!important}.av.kon .avd{background:#4cc9f0;color:#06262c}.av.kon,.av.kon .avt,.av.kon .avh{color:#e6f7ff}.av.kon .avh{opacity:.8}
+.konr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:6px 2px 4px}.konr select{width:auto;padding:6px 8px;font-size:13px}.av.kon{background:linear-gradient(100deg,rgba(76,201,240,.25),rgba(76,201,240,.06) 70%);border-color:rgba(76,201,240,.5);animation:none!important}.av.kon .avd{background:#4cc9f0;color:#06262c}
+.av.kon.leak{background:linear-gradient(100deg,rgba(255,77,109,.32),rgba(255,77,109,.08) 70%);border-color:rgba(255,77,109,.6)}
+.av.kon.leak .avd{background:#ff4d6d;color:#fff}.av.kon,.av.kon .avt,.av.kon .avh{color:#e6f7ff}.av.kon .avh{opacity:.8}
 .cmb{display:block;width:100%;text-align:left;background:linear-gradient(100deg,rgba(61,220,151,.16),rgba(255,182,39,.10));border:1px solid rgba(61,220,151,.4);border-radius:12px;padding:12px;color:var(--ink);font:inherit;cursor:pointer;margin-top:8px}
 .cmb>b{font-size:15px}.cmv{display:flex;gap:16px;margin-top:6px}.cmv span{display:flex;flex-direction:column}.cmv small{font-size:11px;color:var(--mute);font-weight:600}.cmv b{font:700 20px var(--display)}
 .ctab{display:flex;flex-direction:column;font-size:13px}.ctab>div{display:grid;grid-template-columns:1.1fr 1.2fr 1fr 1fr .6fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}.ctab>div:last-child{border:0}.ctab .cth{color:var(--mute);font-size:11px;font-weight:700;text-transform:uppercase}.ctab span{text-align:right}.ctab span:first-child{text-align:left}
@@ -428,7 +430,8 @@ function avisos(){const A=$("avis");if(!A)return;const t=new Date(today+"T00:00"
   if(wd===konDay()&&P.length)return[{w:"Gaur",t:`📋 Kontagailuak irakurtzeko eguna (${P.length})`}];
   if(old.length)return[{w:"Gaur",t:`📋 ${old.length} kontagailu ${Math.max(...old.map(x=>x.age))>=999?"irakurri gabe":Math.max(...old.map(x=>x.age))+" egun irakurri gabe"}`}];
   if((wd+1)%7===konDay())return[{w:"Bihar",t:"📋 Kontagailuak irakurtzeko eguna"}];return[]})();
- A.hidden=!L.length&&!B.length&&!KR.length;A.innerHTML=KR.map(o=>`<button class="av kon${o.w==="Gaur"?"":" bihar"}" data-kon="1"><span class="avd">${o.w}</span><span class="avt">${esc(o.t)}</span><span class="avh">Kontsumoak ›</span></button>`).join("")+B.map(o=>`<button class="av bday${o.w==="Gaur"?"":" bihar"}" data-bd="${esc(o.c.id)}"><span class="cf" aria-hidden="true">${conf(o.w==="Gaur"?22:8)}</span><span class="avd">${o.w}</span><span class="avt">🎂 ${o.w==="Gaur"?"Zorionak, "+esc(o.c.name)+"!":"Urtebetetzea: "+esc(o.c.name)}</span><span class="avh">🎉</span></button>`).join("")+L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
+ meters.forEach(m=>{const lk=mLeakLast(m);if(lk&&lk.leak&&dDiff(lk.b.d,today)<=21)KR.unshift({w:"Gaur",t:`💧 Fuga posiblea: ${m.name} · ${nf(lk.lh,1)} L/h ikastola itxita zegoela`,lk:1})});
+ A.hidden=!L.length&&!B.length&&!KR.length;A.innerHTML=KR.map(o=>`<button class="av kon${o.lk?" leak":""}${o.w==="Gaur"?"":" bihar"}" data-kon="1"><span class="avd">${o.w}</span><span class="avt">${esc(o.t)}</span><span class="avh">Kontsumoak ›</span></button>`).join("")+B.map(o=>`<button class="av bday${o.w==="Gaur"?"":" bihar"}" data-bd="${esc(o.c.id)}"><span class="cf" aria-hidden="true">${conf(o.w==="Gaur"?22:8)}</span><span class="avd">${o.w}</span><span class="avt">🎂 ${o.w==="Gaur"?"Zorionak, "+esc(o.c.name)+"!":"Urtebetetzea: "+esc(o.c.name)}</span><span class="avh">🎉</span></button>`).join("")+L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
  A.querySelectorAll("[data-kon]").forEach(b=>b.onclick=()=>{RGO.clear();DGO.clear();view="kon";render();animV();scrollTo(0,0)});
  A.querySelectorAll("[data-bd]").forEach(b=>b.onclick=()=>confettiBurst(b));
  if(B.some(o=>o.w==="Gaur")&&!window.__cfDone){window.__cfDone=1;setTimeout(()=>{const b=A.querySelector(".bday:not(.bihar)");if(b)confettiBurst(b)},500)}
@@ -615,7 +618,13 @@ const mReads=m=>(m.reads||[]).filter(r=>r&&r.d&&isFinite(+r.v)).slice().sort((a,
 function mIntervals(m){const R=mReads(m),out=[];for(let i=1;i<R.length;i++){const a=R[i-1],b=R[i],days=Math.max(1,dDiff(a.d,b.d));let c=+b.v-(+a.v),refill=false;
   if(m.kind==="gasol"){c=+a.v-(+b.v);if(c<0){refill=true;c=0}}
   out.push({a:a.d,b:b.d,days,c,pd:c/days,refill,neg:m.kind!=="gasol"&&c<0})}return out}
-function mStatus(m){const I=mIntervals(m).filter(x=>!x.refill&&!x.neg),R=mReads(m),last=R[R.length-1];
+const LEAKDEF=10;
+function rdTs(r){return new Date(r.d+"T"+(r.t||"12:00")).getTime()}
+// Fuga-probak: "itxita" markatutako irakurketa bakoitza aurrekoarekin konparatu → L/orduko
+function mLeakTests(m){if(m.kind!=="ur")return[];const R=mReads(m).slice().sort((a,b)=>rdTs(a)-rdTs(b)),thr=+m.leakLh>0?+m.leakLh:LEAKDEF,out=[];
+ for(let i=1;i<R.length;i++){const b=R[i];if(!b.closed)continue;const a=R[i-1],hrs=(rdTs(b)-rdTs(a))/36e5;if(!(hrs>0))continue;const L=(+b.v-(+a.v))*1000,lh=Math.max(0,L)/hrs;out.push({a,b,hrs,L,lh,thr,leak:lh>thr})}return out}
+const mLeakLast=m=>{const T=mLeakTests(m);return T[T.length-1]||null};
+function mStatus(m){const lk=mLeakLast(m);if(lk&&lk.leak&&dDiff(lk.b.d,today)<=21)return{cls:"rr",txt:`💧 Fuga posiblea: ${nf(lk.lh,1)} L/h itxita zegoela`};const I=mIntervals(m).filter(x=>!x.refill&&!x.neg),R=mReads(m),last=R[R.length-1];
  if(!last)return{cls:"",txt:"Irakurketarik ez"};
  const age=dDiff(last.d,today);
  if(I.length<2)return{cls:age>35?"ry":"",txt:age>35?`${age} egun azken irakurketatik`:"Datu gutxi oraindik"};
@@ -672,6 +681,7 @@ function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:
  <label class="f">Mota<select id="mK">${Object.entries(KIND).map(([k,v])=>`<option value="${k}"${m.kind===k?" selected":""}>${v.ic} ${v.l} (${v.u})</option>`).join("")}</select></label>
  <label class="f">Eraikina / lekua<input id="mP" value="${esc(m.place||"")}" list="mPL" placeholder="Adib.: Salbatore Mitxelena, Ixpilla"><datalist id="mPL">${places.map(p=>`<option value="${esc(p)}">`).join("")}</datalist></label>
  <label class="f">Prezioa (€ unitateko, aukerakoa)<input id="mC" type="number" step="0.0001" min="0" value="${esc(m.price??"")}" placeholder="Adib.: 0,18"></label>
+ <label class="f" id="mLkW"${(m.kind||"el")==="ur"?"":" hidden"}>💧 Fuga-muga: ikastola itxita dagoenean onartzen den gehienezko kontsumoa (L/orduko)<input id="mLk" type="number" step="1" min="0" value="${esc(m.leakLh??"")}" placeholder="${LEAKDEF} (lehenetsia)"></label>
  <label class="f" hidden>Datuak nondik<select id="mS">${Object.entries(KSRC).map(([k,v])=>`<option value="${k}"${(m.src||"eskuz")===k?" selected":""}>${v}</option>`).join("")}</select></label>
  <label class="f">Beste kontagailu baten barruan dago? (azpikontagailua: bere kontsumoa nagusian sartzen da, ez da batuko)<select id="mPa"></select></label>
  <label class="f" id="mRw"${(m.kind||"el")==="el"?"":" hidden"}>Zer neurtzen du (argindarra)<select id="mR"><option value="">—</option>${Object.entries(EROL).map(([k,v])=>`<option value="${k}"${m.erol===k?" selected":""}>${v}</option>`).join("")}</select></label>
@@ -679,14 +689,15 @@ function editMeter(m){const n=!m;m=m?cl(m):{id:uid("m"),name:"",kind:"el",place:
  <div class="acts">${n?"":`<button class="btn" id="mX" style="color:var(--urg)">Ezabatu</button>`}<span class="grow"></span><button class="btn" id="mCc">Utzi</button><button class="btn pri" id="mG">Gorde</button></div>`);
  setTimeout(()=>$("mN").focus(),0);$("mCc").onclick=close;
  const paOpts=()=>{const kk=$("mK").value,cur=$("mPa").value||m.parent||"";$("mPa").innerHTML=`<option value="">Ez, kontagailu nagusia da</option>`+meters.filter(x=>x.id!==m.id&&(x.kind||"el")===kk&&x.parent!==m.id).map(x=>`<option value="${esc(x.id)}"${cur===x.id?" selected":""}>↳ ${esc(x.name)}${x.place?" · "+esc(x.place):""}</option>`).join("")};paOpts();
- $("mK").onchange=()=>{$("mGn").hidden=$("mK").value!=="gasol";$("mRw").hidden=$("mK").value!=="el";paOpts()};
- $("mG").onclick=()=>{const v=$("mN").value.trim();if(!v){$("mN").focus();return}m.name=v;m.kind=$("mK").value;m.place=$("mP").value.trim();m.price=$("mC").value===""?"":+$("mC").value;m.src=$("mS").value;m.erol=m.kind==="el"?$("mR").value:"";m.parent=$("mPa").value||"";saveMeter(m);if(n)meterSheet(m);else meterSheet(m)};
+ $("mK").onchange=()=>{$("mGn").hidden=$("mK").value!=="gasol";$("mRw").hidden=$("mK").value!=="el";$("mLkW").hidden=$("mK").value!=="ur";paOpts()};
+ $("mG").onclick=()=>{const v=$("mN").value.trim();if(!v){$("mN").focus();return}m.name=v;m.kind=$("mK").value;m.place=$("mP").value.trim();m.price=$("mC").value===""?"":+$("mC").value;m.leakLh=$("mLk").value===""?"":+$("mLk").value;m.src=$("mS").value;m.erol=m.kind==="el"?$("mR").value:"";m.parent=$("mPa").value||"";saveMeter(m);if(n)meterSheet(m);else meterSheet(m)};
  const x=$("mX");if(x)x.onclick=()=>{if(x.dataset.a!=="1"){x.dataset.a="1";x.textContent="Benetan ezabatu?";return}meters=meters.filter(y=>y.id!==m.id);del("meters",m.id);close()}}
 function meterSheet(m){if(!m)return;m=meters.find(x=>x.id===m.id)||m;const k=kOf(m),R=mReads(m),I=mIntervals(m),li=I[I.length-1],st=mStatus(m),last=R[R.length-1];
  const pr=m.price!==""&&m.price!=null&&+m.price>0?+m.price:null;
  const month=mMonthly(m)[today.slice(0,7)]||0;
  const par=m.parent&&meters.find(x=>x.id===m.parent);let shr="";if(par){const a=mDaily(m),b=mDaily(par),ds=Object.keys(a).filter(d=>d in b).sort().slice(-60),sa=ds.reduce((s,d)=>s+a[d],0),sb=ds.reduce((s,d)=>s+b[d],0);
   shr=`<div class="note" style="margin:4px 0 8px">↳ <b>${esc(par.name)}</b>-ren barruan dago: bere kontsumoa nagusian sartuta dago, ez da totaletan batzen.${sb>0&&ds.length>=3?` Azken ${ds.length} egunetan nagusiaren <b>%${Math.round(sa/sb*100)}</b> izan da (${nf(sa)} / ${nf(sb)} ${k.u}).`:" Bi kontagailuen irakurketak garai berean dituzunean, nagusiaren zein ehuneko den kalkulatuko dut."}</div>`}
+ if(m.kind==="ur"){const T=mLeakTests(m).slice(-4).reverse();shr+=`<div class="card2" style="margin:6px 0 10px"><b>💧 Fuga-probak</b>${T.length?T.map(x=>`<div class="dd"><span>${fmtD(x.a.d)}${x.a.t?" "+esc(x.a.t):""} → ${fmtD(x.b.d)}${x.b.t?" "+esc(x.b.t):""} <small style="color:var(--mute)">(${Math.round(x.hrs)} h · ${nf(Math.max(0,x.L))} L)</small></span><b style="color:${x.leak?"var(--urg)":"var(--ok)"}">${x.leak?"⚠︎ ":"✓ "}${nf(x.lh,1)} L/h</b></div>`).join("")+`<div class="note" style="margin:6px 0 0">Muga: ${nf(T[0].thr)} L/h (kontagailua editatuz alda daiteke)</div>`:`<div class="note" style="margin:4px 0 0">Oraindik ez da probarik egin. Ostiral arratsaldean irakurri, eta astelehen goizean, inor iritsi baino lehen, irakurri berriro «🔒 Fuga-proba» markatuta.</div>`}</div>`}
  const kids=meters.filter(x=>x.parent===m.id);if(kids.length){const b=mDaily(m);shr+=`<div class="note" style="margin:4px 0 8px">Barruan: ${kids.map(c=>{const a=mDaily(c),ds=Object.keys(a).filter(d=>d in b).sort().slice(-60),sa=ds.reduce((s,d)=>s+a[d],0),sb=ds.reduce((s,d)=>s+b[d],0);return `<b>${esc(c.name)}</b>${sb>0&&ds.length>=3?" %"+Math.round(sa/sb*100):""}`}).join(" · ")}</div>`}
  sheet(`<h3><span style="color:${k.c}">${k.ic}</span> ${esc(m.name)}</h3><div class="note">${esc(m.place||"")}${m.place?" · ":""}${k.l} · ${esc(KSRC[m.src||"eskuz"]||"")}</div>${shr}
  ${st.cls?`<div class="mbar ms-${st.cls}">${esc(st.txt)}</div>`:""}
@@ -700,9 +711,10 @@ function meterSheet(m){if(!m)return;m=meters.find(x=>x.id===m.id)||m;const k=kOf
  document.querySelectorAll("[data-rdx]").forEach(b=>b.onclick=()=>{if(b.dataset.a!=="1"){b.dataset.a="1";b.textContent="Ziur?";return}const x=cl(m),Rs=mReads(x);Rs.splice(+b.dataset.rdx,1);x.reads=Rs;saveMeter(x);meterSheet(x)})}
 function readSheet(m){const k=kOf(m),R=mReads(m),last=R[R.length-1];let photo=null;
  sheet(`<h3>${k.ic} ${esc(m.name)} · irakurketa</h3>
- <label class="f">Data<input type="date" id="rdD" value="${today}"></label>
+ <div style="display:flex;gap:8px"><label class="f" style="flex:1.4">Data<input type="date" id="rdD" value="${today}"></label><label class="f" style="flex:1">Ordua<input type="time" id="rdT" value="${pad(new Date().getHours())}:${pad(new Date().getMinutes())}"></label></div>
  <label class="f">${m.kind==="gasol"?"Tangako maila":"Kontagailuak dioena"} (${k.u})<input type="number" id="rdV" step="any" inputmode="decimal" placeholder="${last?"Azkena: "+nf(+last.v,2):""}"></label>
  <span class="warnx" id="rdW" hidden></span>
+ ${m.kind==="ur"&&last?`<label class="lkchk" style="display:flex;gap:10px;width:100%;box-sizing:border-box;align-items:flex-start;margin:4px 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer"><input type="checkbox" id="rdX" style="margin-top:3px;width:18px;height:18px;flex:none"><span><b>🔒 Fuga-proba</b><br><small style="color:var(--mute)">Aurreko irakurketatik (${fmtY(last.d)}${last.t?" "+esc(last.t):""}) ikastola itxita egon da eta inork ez du urik erabili (asteburua, oporrak, gaua). Kontagailua mugitu bada, fuga egon daiteke.</small></span></label>`:""}
  <div class="f"><span>Argazkia (aukerakoa)</span><div style="display:flex;gap:8px;align-items:center;margin-top:6px"><label class="btn sm">📷 Argazkia atera<input type="file" id="rdP" accept="image/*" capture="environment" hidden></label><span class="note" id="rdPs"></span></div></div>
  <div class="acts"><span class="grow"></span><button class="btn" id="rdC">Utzi</button><button class="btn pri" id="rdG">Gorde</button></div>`);
  setTimeout(()=>$("rdV").focus(),0);$("rdC").onclick=()=>meterSheet(m);
@@ -711,7 +723,7 @@ function readSheet(m){const k=kOf(m),R=mReads(m),last=R[R.length-1];let photo=nu
  $("rdG").onclick=async()=>{const d=$("rdD").value||today,v=parseFloat(String($("rdV").value).replace(",","."));if(!isFinite(v)){$("rdV").focus();return}
   const prev=R.filter(r=>r.d<=d).pop();
   if(!ok&&prev&&m.kind!=="gasol"&&v<+prev.v){$("rdW").textContent=`⚠︎ Aurrekoa (${nf(+prev.v,2)}) baino txikiagoa da. Ziur? Sakatu berriro Gorde.`;$("rdW").hidden=false;ok=true;return}
-  const r={d,v};
+  const r={d,v},tt=$("rdT")&&$("rdT").value;if(tt)r.t=tt;if($("rdX")&&$("rdX").checked)r.closed=true;
   if(photo&&AS){$("rdG").textContent="Igotzen…";try{const u=await AS.upload(photo,{type:photo.type||"image/jpeg"});r.photo=u.id}catch(e){toast("Ezin izan da argazkia igo")}}
   const x=cl(m);x.reads=[...mReads(x).filter(y=>y.d!==d),r];saveMeter(x);toast("Irakurketa gordeta");meterSheet(x)}}
 
