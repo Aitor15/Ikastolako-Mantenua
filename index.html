@@ -603,7 +603,7 @@ const syT=(id,dec=1)=>{const v=syV(id);if(!v)return "—";const x=syN(id);return
 function heatDaily(){const D=HEAT.filter(h=>h.d&&h.e).sort((a,b)=>a.d.localeCompare(b.d)),out=[];let prev=null;
  D.forEach(h=>{const hs=Object.keys(h.e).filter(k=>h.e[k]!=null).sort();if(!hs.length)return;const first=+h.e[hs[0]],last=+h.e[hs[hs.length-1]];
   const base=prev!=null&&prev<=first?prev:first,kwh=Math.max(0,last-base);const ts=Object.values(h.t||{}).filter(v=>v!=null);out.push({d:h.d,kwh,te:ts.length?ts.reduce((a,b)=>a+ +b,0)/ts.length:null,n:hs.length});prev=last});return out}
-function heatBlock(){if(!SYN.last&&!SYN.error)return "";const Dd=heatDaily(),td=Dd.find(x=>x.d===today),Z=SYN.zones||{};
+function heatBlock(){if(!SYN.last&&!SYN.error)return DB?`<div class="mgrp" style="margin-top:18px">🔥 Berokuntza · Siemens Synco</div><div class="elst"><span class="dot"></span>${SYN.runNow&&Date.now()-SYN.runNow<6e5?"⟳ Lehen irakurketa eskatuta… (minutu bat)":"Synco IC ez dago konektatuta oraindik"}</div><div class="gbar"><button class="gadd" id="syR">⟳ Berokuntza: eguneratu orain</button></div>`:"";const Dd=heatDaily(),td=Dd.find(x=>x.d===today),Z=SYN.zones||{};
  const zr=Object.entries(Z).map(([n,ids])=>{const t=syN(ids[1]),on=syN(ids[2]),sel=syV(ids[0]),vl=syV(ids[4]);const cls=t==null?"":on!=null&&t<on-1?"cold":on!=null&&t>on+2?"hot":"ok";
   return `<div class="hzr"><span class="hzn">${esc(n)}</span><span class="hzt ${cls}">${t!=null?nf(t,1)+" °C":"—"}</span><span class="hzs">${sel?esc(sel[0]):""}${vl&&vl[0]&&vl[0]!=="---"?` · ${esc(vl[0])}${esc(vl[1]||"")}`:""}</span></div>`}).join("");
  return `<div class="mgrp" style="margin-top:18px">🔥 Berokuntza · Siemens Synco</div>
