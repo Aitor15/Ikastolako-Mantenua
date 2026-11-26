@@ -583,8 +583,10 @@ function soDayBars(c,upTo,n=30){const D=soDays(c).filter(e=>e.d<=upTo).slice(-n)
   if(i%5===0||i===D.length-1)s+=`<text x="${x+bw/2}" y="${H+13}" fill="var(--mute)" font-size="8.5" text-anchor="middle">${+e.d.slice(8)}</text>`});
  return s+`</svg>`}
 const soMonth=(c,ym)=>soDays(c).filter(e=>e.d.startsWith(ym)).reduce((a,e)=>a+soPV(e),0);
-function solarBlock(){const C=soSt(),st=FSCFG.last?`FusionSolar · azken eguneratzea ${fmtY(String(FSCFG.last).slice(0,10))} ${String(FSCFG.last).slice(11,16)}`:"FusionSolar ez dago konektatuta oraindik";
- return `<div class="mgrp" style="margin-top:18px">☀️ Eguzki-plakak · FusionSolar</div>
+function solarBlock(){const inner=solarInner(),op=ZOPEN.has("S"),C=soSt(),tv=C.reduce((a,c)=>{const e=soDays(c).find(x=>x.d===today);return a+(e?soPV(e):0)},0),kw=C.map(c=>{const e=soDays(c).find(x=>x.d===today);return e&&e.now&&e.now.kw!=null?+e.now.kw:null}).filter(v=>v!=null).reduce((a,b)=>a+b,null);
+ return `<button class="zsh hbig${op?" op":""}" data-zside="S"><span>☀️ EGUZKI-PLAKAK</span><span class="zsm">${kw!=null?nf(kw,1)+" kW · ":""}${tv?"gaur "+nf(tv)+" kWh":FSCFG.last?"":"konektatu gabe"}${FSCFG.error?" · ⚠︎":""} <span class="zch">▾</span></span></button><div class="zsb hbody"${op?"":" hidden"}>${inner}</div>`}
+function solarInner(){const C=soSt(),st=FSCFG.last?`FusionSolar · azken eguneratzea ${fmtY(String(FSCFG.last).slice(0,10))} ${String(FSCFG.last).slice(11,16)}`:"FusionSolar ez dago konektatuta oraindik";
+ return `
  ${C.map(c=>{const D=soDays(c),e=D[D.length-1];if(!e)return "";const v=soPV(e),m=med(D.slice(-31,-1).map(soPV)),mt=soMonth(c,today.slice(0,7));
   return `<button class="mrow ms-rg" data-soc="${esc(c)}"><span class="mic" style="color:#3ddc97">☀️</span><span class="mtx"><b>${esc(soName(c))}</b><small>${fmtY(e.d)}${e.d===today?" (gaur arte)":""}</small><small class="mst">${HIL[+today.slice(5,7)-1]}: ${nf(mt)} kWh${m?" · ohikoa "+nf(m)+" kWh/egun":""}</small></span>${e.d===today&&e.now&&e.now.kw!=null?`<span class="mvl" style="margin-right:10px"><b style="color:#3ddc97">${nf(+e.now.kw,1)}</b><small>kW${e.now.at?" · "+esc(e.now.at):" orain"}</small></span>`:""}<span class="mvl"><b>${nf(v)}</b><small>kWh ekoiztuta</small></span></button>`}).join("")}
  <div class="elst"><span class="dot${FSCFG.error?" err":FSCFG.last?" ok":""}"></span>${esc(FSCFG.error?"Errorea: "+FSCFG.error:st)}${FSCFG.runNow&&FSCFG.last&&FSCFG.runNow>new Date(FSCFG.last).getTime()&&Date.now()-FSCFG.runNow<6e5?" · ⟳ eguneratzen…":""}</div>${(()=>{const D=SOLAR.filter(e=>e.d&&soPV(e)>0).map(e=>e.d).sort();if(!D.length)return "";const n=new Set(D).size,er=/errorea/.test(FSCFG.bfLog||"");return `<div class="note" style="margin:2px 0 6px;font-size:11.5px">📅 Kargatutako datuak: ${fmtY(D[0])} → ${fmtY(D[D.length-1])} · ${nf(n)} egun${er?` · ⚠ ${esc((FSCFG.bfLog.match(/[^·]*errorea[^·]*/)||[""])[0].trim())}`:""}</div>`})()}${FSCFG.backfillFrom&&!FSCFG.error?`<div class="note" style="margin:2px 0 6px;font-size:11.5px">⏳ Historikoa eskatuta (${esc(FSCFG.backfillFrom)}tik)…</div>`:FSCFG.backfillNext?`<div class="note" style="margin:2px 0 6px;font-size:11.5px">⏳ Oraindik falta: ${esc(FSCFG.backfillTo||"")} → ${esc(FSCFG.backfillNext)}. Sakatu berriro "eguneratu orain" (urtea hutsik) edo itxaron hurrengo ordura arte.</div>`:""}
@@ -771,8 +773,8 @@ function drawKon(V){const G={};meters.slice().sort((a,b)=>kRank(a.kind)-kRank(b.
  V.innerHTML=`<div class="zone"><div class="head2"><h2 class="cdt">Kontsumoak</h2><button class="btn sm" id="kN">+ Kontagailua</button></div>
  <label class="konr">🔔 Kontagailuak irakurtzeko gogorarazi <select id="kRd"><option value="-1"${konOn()?"":" selected"}>Ez</option>${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${konOn()&&konDay()===d?" selected":""}>${KWD[d]}</option>`).join("")}</select></label>
  ${Object.keys(tot).length?`<div class="kp">${Object.entries(tot).sort((a,b)=>kRank(a[0])-kRank(b[0])).map(([k,v])=>`<div data-kt="${k}" role="button" tabindex="0" style="cursor:pointer"><small>${KIND[k].ic} ${KIND[k].l} · ${HIL[+mon.slice(5)-1]} ›</small><b>${nf(v)} ${KIND[k].u}</b></div>`).join("")}</div>`:""}
- ${solarBlock()}
  ${heatBlock()}
+ ${solarBlock()}
  <div class="mgrp" style="margin-top:18px">📋 Eskuzko irakurketak</div>
  ${combCards()}
  ${meters.length?Object.entries(G).map(([p,L])=>`<div class="mgrp">${esc(p)}</div>${subOrd(L).map(meterCard).join("")}`).join(""):
