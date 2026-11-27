@@ -1172,7 +1172,7 @@ let FOLDS=[];const dmOf=(f,d)=>d?((f.dmeta||{})[d]||{}):{n:f.n,u:f.u,last:f.last
 const dmRev=m=>m&&m.last?{id:"_",n:m.n||1,u:m.u||"urte",last:m.last,start:m.last}:null;
 const foldCands=f=>[dmRev(dmOf(f,"")),...(f.dirs||[]).map(d=>dmRev(dmOf(f,d)))].filter(Boolean);
 const dmLine=m=>{const p=dmRev(m);if(!p)return `<span class="dmn">Berrikuspen datarik ez</span>`;const s=revState(p);return `<span class="dm dm-${s[0]}">Hurrengoa: <b>${fmtY(nextRev(p))}</b> · ${freqTxt(p)}</span>`};const splitRevs=a=>{FOLDS=a.filter(r=>r.kind==="fold");return a.filter(r=>r.kind!=="fold")};
-const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS","CH GROUP","OCA (Organismo de Control Autorizado)",...revs.map(r=>r.group).filter(Boolean)])].sort();
+const revGroups=()=>[...new Set(["LEHENGOAK","PROTECH","TECMAN","GARBIGRAS","CH GROUP","OCA (Organismo de Control Autorizado)","SERKONTEN",...revs.map(r=>r.group).filter(Boolean)])].sort();
 /* ---------- Protokolo-txantiloiak (PDF gainean betetzeko) ---------- */
 const PROTOS={};
 const protoOf=r=>!r||r.proto==="none"?null:(r.proto&&PROTOS[r.proto])||(/DETEK|DETEC/i.test(r.name||"")?PROTOS.det:/BIE/i.test(r.name||"")?PROTOS.bie:/EXTINTOR|ITZAL|ITZAIL/i.test(r.name||"")?PROTOS.ext:null);
