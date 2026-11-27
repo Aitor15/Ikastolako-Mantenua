@@ -371,6 +371,14 @@ body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
 .zone .room.rs-rr{background:linear-gradient(260deg,rgba(255,107,107,.26),rgba(255,107,107,.07) 70%)}
 .zone .room.rs-ry{background:linear-gradient(260deg,rgba(255,182,39,.22),rgba(255,182,39,.05) 70%)}
 .zone .room.rs-rg{background:linear-gradient(260deg,rgba(61,220,151,.15),rgba(61,220,151,.03) 70%)}
+
+/* SALTO */
+.sar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}.sar:first-of-type{border-top:0}
+.san{flex:1;min-width:0;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.sab{font-size:10.5px;font-weight:700;background:rgba(255,182,39,.18);color:var(--acc);border:1px solid rgba(255,182,39,.45);border-radius:6px;padding:1px 5px}
+.sas{display:flex;flex-direction:column;align-items:flex-end;text-align:right}.sas small{color:var(--mute);font-size:11.5px}
+.sar.low{background:linear-gradient(260deg,rgba(255,107,107,.18),transparent 70%)}
+.sae{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px}.sae:first-of-type{border-top:0}.sat{color:var(--mute);min-width:82px;font-size:12px}.sad{display:flex;flex-direction:column}.sad small{color:var(--mute);font-size:11.5px}.sae.w .sad{color:#ffd166}
+.zsh.hbig.salow{border-color:rgba(255,107,107,.55)}
 </style>
 
 <div class="wrap">
@@ -450,6 +458,7 @@ function avisos(){const A=$("avis");if(!A)return;const t=new Date(today+"T00:00"
   if(old.length)return[{w:"Gaur",t:`📋 ${old.length} kontagailu ${Math.max(...old.map(x=>x.age))>=999?"irakurri gabe":Math.max(...old.map(x=>x.age))+" egun irakurri gabe"}`}];
   if((wd+1)%7===konDay())return[{w:"Bihar",t:"📋 Kontagailuak irakurtzeko eguna"}];return[]})();
  {const H=heatHoliday();if(H)KR.unshift(H)}
+ (SALTO.doors||[]).filter(d=>+d.bat>=2).forEach(d=>KR.unshift({w:"Gaur",t:`🪫 SALTO pila baxua: ${d.name}`,lk:1}));
  meters.forEach(m=>{const lk=mLeakLast(m);if(lk&&lk.leak&&dDiff(lk.b.d,today)<=21)KR.unshift({w:"Gaur",t:`${LK[m.kind].ic} ${LK[m.kind].ok}: ${m.name} · ${m.kind==="gas"?nf(Math.max(0,lk.L),1)+" m³":nf(lk.lh,1)+" L/h"} ikastola itxita zegoela`,lk:1})});
  A.hidden=!L.length&&!B.length&&!KR.length;A.innerHTML=KR.map(o=>`<button class="av kon${o.lk?" leak":""}${o.ht?" heat":""}${o.w==="Gaur"?"":" bihar"}" data-kon="1"><span class="avd">${o.w}</span><span class="avt">${esc(o.t)}</span><span class="avh">${o.ht?"📱":"Kontsumoak ›"}</span></button>`).join("")+B.map(o=>`<button class="av bday${o.w==="Gaur"?"":" bihar"}" data-bd="${esc(o.c.id)}"><span class="cf" aria-hidden="true">${conf(o.w==="Gaur"?22:8)}</span><span class="avd">${o.w}</span><span class="avt">🎂 ${o.w==="Gaur"?"Zorionak, "+esc(o.c.name)+"!":"Urtebetetzea: "+esc(o.c.name)}</span><span class="avh">🎉</span></button>`).join("")+L.map(e=>`<button class="av${e.date===today?"":" bihar"}" data-avd="${esc(e.date)}"><span class="avd">${e.date===today?"Gaur":"Bihar"}</span><span class="avt">${esc(e.title||"—")}</span>${e.time||e.place?`<span class="avh">${[esc(e.time||""),esc(e.place||"")].filter(Boolean).join(" · ")}</span>`:""}</button>`).join("");
  A.querySelectorAll("[data-kon]").forEach(b=>b.onclick=()=>{RGO.clear();DGO.clear();view="kon";render();animV();scrollTo(0,0)});
@@ -467,7 +476,7 @@ function render(){if(document.body.classList.contains("dragging"))return;tasks=A
  if(view==="rooms"&&room&&sp(room))return drawRoom(V,sp(room));
  if(view==="rooms")return drawRooms(V);
  if(view==="cal")return drawCal(V);
- if(view==="rev")return drawRev(V);
+ if(view==="rev"){drawRev(V);V.insertAdjacentHTML("beforeend",saltoBlock());bindSalto(V);return}
  if(view==="doc")return drawDocs(V);
  if(view==="staff")return drawStaff(V);
  if(view==="kon")return drawKon(V);
@@ -699,6 +708,23 @@ function calSheet(k){const C=syCals();if(!C[k])return;let R=JSON.parse(JSON.stri
    sheet(`<h3>Ziur zaude?</h3><div class="note"><b>${PRGN[k]}</b> opor-egutegia ${R.length} tarterekin geratuko da benetako berokuntzan:</div><div class="card2">${R.map(r=>`<div class="dd"><span>${r.yearly?esc(r.d0)+"–"+esc(r.d1)+" (urtero)":fmtD(oz2iso(r.d0))+" → "+fmtD(oz2iso(r.d1))}</span><b>${CTYP[r.type]||""}</b></div>`).join("")||"—"}</div><div class="acts"><span class="grow"></span><button class="btn" id="caN">Ez</button><button class="btn pri" id="caYs">Bai, aplikatu</button></div>`);
    $("caN").onclick=draw;$("caYs").onclick=()=>{if(!DB){toast("Bertsio honetan ezin da");return}DB.collection("synco_cmd").add({cal:k,rows:JSON.stringify(R),by:(typeof FBU!=="undefined"&&FBU&&FBU.email)||"",at:Date.now(),status:"pending"}).then(()=>{toast("Bidalita. Minutu batean aplikatuko da.");close()}).catch(()=>toast("Ezin izan da bidali"))}}};
  draw()}
+/* ---------- SALTO Space (ikastolako ordenagailuko script-etik) ---------- */
+let SALTO={};
+const SAEV=[[/^Door opened \(key\)$/i,"Atea irekita (giltza)"],[/^Door opened \(inside handle\)$/i,"Atea irekita (barruko heldulekua)"],[/^Door opened \(mechanical key\)$/i,"Atea irekita (giltza mekanikoa)"],[/^Start office mode$/i,"Pasa-modua hasi"],[/^End office mode$/i,"Pasa-modua amaitu"],[/^Key updated \(online\)$/i,"Giltza eguneratua (online)"],[/^Door closed$/i,"Atea itxita"],[/^Door left open$/i,"Atea irekita geratu da"],[/^Intrusion$/i,"Intrusioa"],[/^Access denied/i,"Sarbidea ukatua"]];
+const saDesc=d=>{for(const[r,t]of SAEV)if(r.test(d||""))return t;return d||""};
+const saWarn=d=>/not completely|denied|left open|intrusion|tamper|forced|alarm|low battery|warning|error|invalid|expired/i.test(d||"");
+const saAge=d=>d?Math.floor((Date.now()-new Date(d).getTime())/864e5):null;
+function saDoors(){return (SALTO.doors||[]).map(d=>({...d,age:saAge(d.batDate),low:+d.bat>=2,ppd:+d.upd===1})).map(d=>({...d,stale:d.age!=null&&d.age>45})).sort((a,b)=>(b.low-a.low)||(b.ppd-a.ppd)||(b.stale-a.stale)||String(a.name).localeCompare(String(b.name),"es"))}
+function saltoBlock(){if(!SALTO.last&&!SALTO.error)return DB?`<div class="zone"><button class="zsh hbig${ZOPEN.has("SA")?" op":""}" data-zside="SA"><span>🔐 SALTO</span><span class="zsm">konektatu gabe <span class="zch">▾</span></span></button><div class="zsb hbody"${ZOPEN.has("SA")?"":" hidden"}><div class="note" style="margin:8px 0">Ikastolako ordenagailuan «salto-mantenua» script-a konfiguratu behar da (IRAKURRI.txt).</div></div></div>`:"";
+ const D=saDoors(),low=D.filter(d=>d.low).length,ppd=D.filter(d=>d.ppd).length,stale=D.filter(d=>d.stale&&!d.low).length,op=ZOPEN.has("SA"),EV=(SALTO.events||[]).slice(0,30);
+ const meta=[low?`🪫 ${low} pila`:"",ppd?`${ppd} PPD`:"",!low&&!ppd?`${D.length} ate · ondo`:""].filter(Boolean).join(" · ");
+ const rows=D.map(d=>`<div class="sar${d.low?" low":d.ppd?" ppd":""}"><span class="san">${esc(d.name)}${d.ppd?`<span class="sab">PPD</span>`:""}</span><span class="sas"><b style="color:${d.low?"#ff8a8a":d.stale?"#b9c6da":"var(--ok)"}">${d.low?"🪫 Pila baxua":d.bat==1?"🔋 Ondo":"🔋 "+(d.bat||"?")}</b><small>${d.batDate?`datua ${fmtD(String(d.batDate).slice(0,10))}${d.age!=null?` · ${d.age} egun`:""}`:"daturik ez"}</small></span></div>`).join("");
+ const evs=EV.map(e=>`<div class="sae${saWarn(e.desc)?" w":""}"><span class="sat">${fmtD(String(e.t).slice(0,10))} ${String(e.t).slice(11,16)}</span><span class="sad">${saWarn(e.desc)?"⚠️ ":""}${esc(saDesc(e.desc))}<small>${esc(e.door)}${e.who?" · "+esc(e.who):""}</small></span></div>`).join("");
+ return `<div class="zone"><button class="zsh hbig${op?" op":""}${low?" salow":""}" data-zside="SA"><span>🔐 SALTO${low?`<span class="pon" style="color:#ff8a8a"><i style="background:#ff6b6b"></i>Pila baxua</span>`:""}</span><span class="zsm">${meta}${SALTO.error?" · ⚠︎":""} <span class="zch">▾</span></span></button><div class="zsb hbody"${op?"":" hidden"}>
+ <div class="elst" style="margin-top:8px"><span class="dot${SALTO.error?" err":" ok"}"></span>${esc(SALTO.error?"Errorea: "+SALTO.error:`ProAccess · azken irakurketa ${fmtY(String(SALTO.last).slice(0,10))} ${String(SALTO.last).slice(11,16)}`)}</div>
+ <div class="card2 hz"><b>Ateak (${D.length})</b><div class="note" style="margin:4px 0 6px">Pilaren datua txartelek ekartzen dute ate online batetik pasatzean. <b>PPD</b>: PPDarekin eguneratu behar da.${stale?` ${stale} atek 45 egun baino gehiago daramatzate datu berririk gabe.`:""}</div>${rows||`<div class="note">Daturik ez.</div>`}</div>
+ <div class="card2 hz"><b>Azken gertaerak</b>${evs||`<div class="note">Oraindik ez dago gertaerarik.</div>`}</div></div></div>`}
+function bindSalto(V){V.querySelectorAll('[data-zside="SA"]').forEach(b=>b.onclick=()=>{const box=b.nextElementSibling;if(ZOPEN.has("SA")){ZOPEN.delete("SA");b.classList.remove("op");box.hidden=true}else{ZOPEN.add("SA");b.classList.add("op");box.hidden=false;box.animate&&box.animate([{opacity:0,transform:"translateY(-4px)"},{opacity:1,transform:"none"}],{duration:180,easing:"ease-out"})}})}
 function bindHeat(V){V.querySelectorAll("[data-zside]").forEach(b=>b.onclick=()=>{const k=b.dataset.zside,box=b.nextElementSibling;if(ZOPEN.has(k)){ZOPEN.delete(k);b.classList.remove("op");box.hidden=true}else{ZOPEN.add(k);b.classList.add("op");box.hidden=false;box.animate&&box.animate([{opacity:0,transform:"translateY(-4px)"},{opacity:1,transform:"none"}],{duration:180,easing:"ease-out"})}});V.querySelectorAll("[data-cal]").forEach(b=>b.onclick=()=>calSheet(b.dataset.cal));V.querySelectorAll("[data-prog]").forEach(b=>b.onclick=()=>progSheet(b.dataset.prog));V.querySelectorAll("[data-zone]").forEach(b=>b.onclick=()=>zoneSheet(b.dataset.zone));V.querySelectorAll("[data-heat]").forEach(b=>b.onclick=heatSheet);const r=V.querySelector("#syR");if(r)r.onclick=()=>{SYN.runNow=Date.now();if(DB)DB.collection("config").doc("synco").set({runNow:SYN.runNow},{merge:true}).catch(()=>toast("Ezin izan da eskatu"));toast("Eskatuta. Minutu batean eguneratuko da.");render()}}
 function heatSheet(){const D=heatDaily().slice(-30);const mx=Math.max(1,...D.map(x=>x.kwh)),W=330,H=110,n=30,bw=W/n;
  let s=`<svg viewBox="0 0 ${W} ${H+20}" width="100%" role="img" aria-label="Eguneko berokuntza">`;D.forEach((x,i)=>{const h=x.kwh/mx*H*0.92,X=(n-D.length+i)*bw;s+=`<rect x="${X+1.5}" y="${H-h}" width="${bw-3}" height="${Math.max(h,1)}" rx="2" fill="#ff8c42"><title>${fmtD(x.d)} · ${nf(x.kwh)} kWh${x.te!=null?" · kanpoan "+nf(x.te,1)+" °C":""}</title></rect>`;if(i%5===0||i===D.length-1)s+=`<text x="${X+bw/2}" y="${H+13}" fill="var(--mute)" font-size="8.5" text-anchor="middle">${+x.d.slice(8)}</text>`});s+=`</svg>`;
@@ -1641,7 +1667,7 @@ function start(){const err=e=>{if(e&&e.code==="permission-denied")denied(FBU);el
  DB=FB;spaces=[];ALL=[];events=[];revs=[];docs=[];staff=[];render();
  const on=(c,f)=>SUBS.push(FB.collection(c).onSnapshot(f,err));
  on("spaces",s=>{spaces=s.docs.map(d=>({id:d.id,...cl(d.data())}));render();imp(s)});
- on("config",s=>{{const dd=s.docs.find(x=>x.id==="datadis");ELCFG=(dd&&cl(dd.data()))||{};const fz=s.docs.find(x=>x.id==="fusion");FSCFG=(fz&&cl(fz.data()))||{};fsAuto();const sy=s.docs.find(x=>x.id==="synco");SYN=(sy&&cl(sy.data()))||{};syAuto();const kn=s.docs.find(x=>x.id==="kon");KONCFG=(kn&&cl(kn.data()))||{}}const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];STP=(sgd&&cl(sgd.data()).parents)||[];SGP=(sgd&&cl(sgd.data()).parentOf)||{};if(Array.isArray(z))ZU=z;render()});
+ on("config",s=>{{const dd=s.docs.find(x=>x.id==="datadis");ELCFG=(dd&&cl(dd.data()))||{};const fz=s.docs.find(x=>x.id==="fusion");FSCFG=(fz&&cl(fz.data()))||{};fsAuto();const sy=s.docs.find(x=>x.id==="synco");SYN=(sy&&cl(sy.data()))||{};syAuto();const sa=s.docs.find(x=>x.id==="salto");SALTO=(sa&&cl(sa.data()))||{};const kn=s.docs.find(x=>x.id==="kon");KONCFG=(kn&&cl(kn.data()))||{}}const d=s.docs.find(x=>x.id==="order");const z=d&&cl(d.data()).zones;const rg=s.docs.find(x=>x.id==="rgroups");RGL=(rg&&cl(rg.data()).logos)||{};const rf=s.docs.find(x=>x.id==="rgfiles");RGF=(rf&&cl(rf.data()).files)||{};const cm=s.docs.find(x=>x.id==="companies");DCO=(cm&&cl(cm.data()).list)||[];DCG=(cm&&cl(cm.data()).gremio)||{};GREM=(cm&&cl(cm.data()).gremios)||GREM0.slice();const sgd=s.docs.find(x=>x.id==="staffgroups");STG=[...new Set(((sgd&&cl(sgd.data()).list)||STG0).map(sgRen))];STP=(sgd&&cl(sgd.data()).parents)||[];SGP=(sgd&&cl(sgd.data()).parentOf)||{};if(Array.isArray(z))ZU=z;render()});
  on("staff",s=>{staff=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("meters",s=>{meters=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
  on("elec",s=>{ELEC=s.docs.map(d=>({id:d.id,...cl(d.data())}));render()});
